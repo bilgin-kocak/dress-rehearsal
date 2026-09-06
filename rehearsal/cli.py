@@ -191,13 +191,14 @@ def run(
     run_id: str = typer.Option(None),
     db: str = typer.Option(None, help="SQLite path (default .rehearsal/ledger.db)"),
     model: str = typer.Option(None, help="Model for the headless client (default: sonnet)"),
+    use_api_key: bool = typer.Option(None, "--api-key/--no-api-key", help="--no-api-key strips ANTHROPIC_API_KEY so Claude Code uses your claude.ai login"),
     config: str = typer.Option(None, "--config", "-c"),
     verbose: bool = typer.Option(False, "-v"),
 ) -> None:
     """Drive the agent N sessions against the twin, then write the report and run the gate."""
     cfg = _cfg(config, market__mode=mode, market__replay_fixture=fixture, market__replay_speed=speed, runner__client=client,
                runner__session_minutes=session_minutes, runner__max_turns=max_turns, server__http_port=port, engine__db_path=db,
-               runner__model=model)
+               runner__model=model, runner__use_api_key=use_api_key)
     _setup_logging(verbose)
     from rehearsal.rehearsal.runner import run_rehearsal
 

@@ -189,8 +189,19 @@ Top recommendations:
 ```
 
 `prompts/strategy_simple_momentum.md` (reads exchangeInfo, rounds to stepSize, restates every order,
-flattens before exit) runs clean: the agent buys, rests limit sells, cancels them, market-sells flat,
-and every write is restated.
+flattens before exit), three headless sessions on the same fixture:
+
+```
+✔ GO-LIVE GATE PASSED (3/3 sessions)  run=e2e_good_4
+Flip to live:
+  claude mcp remove binance-mcp-server
+  claude mcp add binance-mcp-server --transport http https://agent.binance.com/mcp/agentic
+  rehearsal shadow install   # keeps the twin mirroring your live calls
+```
+
+| sessions | tool calls | rejected | policy violations | liquidations | confirmation compliance | max drawdown | flattened |
+|---|---|---|---|---|---|---|---|
+| 3 | 49 | 1 (2%) | 0 | 0 | 26/26 writes restated (100%) | 0.05% | 3/3 |
 
 ### Notes on headless rehearsals
 
