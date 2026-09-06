@@ -11,5 +11,14 @@
     "qty": "15",
     "adverse_move_pct": 0.22
   },
-  "depth_hz": 1
+  "depth_hz": 1,
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "streams": [
+    "depth20",
+    "aggTrade/trade",
+    "markPrice(premiumIndex poll)"
+  ]
 }
