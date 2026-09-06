@@ -1,0 +1,79 @@
+# Maps real tool names (as served in tools.json / fallback_tools.json) to twin handlers.
+#
+# Keys are canonical dotted names. The twin also accepts the underscore form Claude Code shows
+# (spot_newOrder) and resolves tool_execute(toolName=...) through the same table.
+#
+# category: market_data | account | trade | transfer | convert | meta | unsupported
+# handler:  a function name in rehearsal/server/handlers.py
+tools:
+  tool_search:                        {category: meta,        handler: tool_search}
+  tool_execute:                       {category: meta,        handler: tool_execute}
+
+  spot.ticker24hr:                    {category: market_data, handler: spot_ticker24hr}
+  spot.tickerPrice:                   {category: market_data, handler: spot_ticker_price}
+  spot.ticker:                        {category: market_data, handler: spot_rolling_ticker}
+  spot.bookTicker:                    {category: market_data, handler: spot_book_ticker}
+  spot.depth:                         {category: market_data, handler: spot_depth}
+  spot.klines:                        {category: market_data, handler: spot_klines}
+  spot.uiKlines:                      {category: market_data, handler: spot_ui_klines}
+  spot.aggTrades:                     {category: market_data, handler: spot_agg_trades}
+  spot.avgPrice:                      {category: market_data, handler: spot_avg_price}
+  spot.exchangeInfo:                  {category: market_data, handler: spot_exchange_info}
+
+  spot.getAccount:                    {category: account,     handler: spot_get_account}
+  spot.newOrder:                      {category: trade,       handler: spot_new_order, market: spot, write: true}
+  spot.newOrderTest:                  {category: trade,       handler: spot_new_order_test, market: spot}
+  spot.deleteOrder:                   {category: trade,       handler: spot_cancel_order, market: spot, write: true}
+  spot.deleteOpenOrders:              {category: trade,       handler: spot_cancel_all, market: spot, write: true}
+  spot.getOrder:                      {category: account,     handler: spot_get_order}
+  spot.getOpenOrders:                 {category: account,     handler: spot_open_orders}
+  spot.allOrders:                     {category: account,     handler: spot_all_orders}
+  spot.myTrades:                      {category: account,     handler: spot_my_trades}
+  spot.rateLimitOrder:                {category: account,     handler: spot_rate_limit_order}
+
+  futures_usds.exchangeInfo:          {category: market_data, handler: usdm_exchange_info}
+  futures_usds.depth:                 {category: market_data, handler: usdm_depth}
+  futures_usds.klines:                {category: market_data, handler: usdm_klines}
+  futures_usds.symbolPriceTicker:     {category: market_data, handler: usdm_ticker_price}
+  futures_usds.ticker24hr:            {category: market_data, handler: usdm_ticker24hr}
+  futures_usds.bookTicker:            {category: market_data, handler: usdm_book_ticker}
+  futures_usds.markPrice:             {category: market_data, handler: usdm_mark_price}
+  futures_usds.fundingRate:           {category: market_data, handler: usdm_funding_rate}
+  futures_usds.openInterest:          {category: market_data, handler: usdm_open_interest}
+  futures_usds.account:               {category: account,     handler: usdm_account}
+  futures_usds.balance:               {category: account,     handler: usdm_balance}
+  futures_usds.positionRisk:          {category: account,     handler: usdm_position_risk}
+  futures_usds.changeLeverage:        {category: trade,       handler: usdm_change_leverage, market: usdm, write: true}
+  futures_usds.changeMarginType:      {category: trade,       handler: usdm_change_margin_type, market: usdm, write: true}
+  futures_usds.newOrder:              {category: trade,       handler: usdm_new_order, market: usdm, write: true}
+  futures_usds.cancelOrder:           {category: trade,       handler: usdm_cancel_order, market: usdm, write: true}
+  futures_usds.cancelAllOpenOrders:   {category: trade,       handler: usdm_cancel_all, market: usdm, write: true}
+  futures_usds.getOrder:              {category: account,     handler: usdm_get_order}
+  futures_usds.openOrders:            {category: account,     handler: usdm_open_orders}
+  futures_usds.allOrders:             {category: account,     handler: usdm_all_orders}
+  futures_usds.userTrades:            {category: account,     handler: usdm_user_trades}
+  futures_usds.income:                {category: account,     handler: usdm_income}
+
+  wallet.accountStatus:               {category: account,     handler: wallet_account_status}
+  wallet.allCoinsInformation:         {category: account,     handler: wallet_all_coins}
+  wallet.queryUserWalletBalance:      {category: account,     handler: wallet_balance}
+  wallet.userUniversalTransfer:       {category: transfer,    handler: wallet_transfer, write: true}
+  wallet.queryUserUniversalTransferHistory: {category: account, handler: wallet_transfer_history}
+  wallet.dailyAccountSnapshot:        {category: account,     handler: wallet_daily_snapshot}
+  wallet.getApiKeyPermission:         {category: account,     handler: wallet_api_permission}
+
+  convert.exchangeInfo:               {category: convert,     handler: convert_exchange_info}
+  convert.getQuote:                   {category: convert,     handler: convert_get_quote}
+  convert.acceptQuote:                {category: convert,     handler: convert_accept_quote, write: true}
+  convert.orderStatus:                {category: convert,     handler: convert_order_status}
+  convert.tradeFlow:                  {category: convert,     handler: convert_trade_flow}
+
+  margin.account:                     {category: account,     handler: margin_account}
+  margin.newOrder:                    {category: unsupported, handler: unsupported, write: true}
+  sub_account.getMainAccountAsset:    {category: account,     handler: sub_account_main_assets}
+  analysis.getTokenAiReport:          {category: unsupported, handler: unsupported}
+
+# What to do with a tool that is in tools.json but not in this map:
+#   passthrough_public: market-data-looking names are routed to the public REST API by heuristics;
+#                       everything else returns {"code": -9001, "msg": "TWIN_UNSUPPORTED: <tool>"}.
+unmapped_policy: passthrough_public

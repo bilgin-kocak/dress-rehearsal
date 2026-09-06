@@ -1,0 +1,2084 @@
+{
+  "_meta": {
+    "source": "fallback",
+    "generated": "2026-09-06T12:09:33Z",
+    "note": "Hand-written fallback. Replace with schemas/tools.json dumped from the real server (rehearsal schema dump).",
+    "server": "binance-mcp-server",
+    "endpoint": "https://agent.binance.com/mcp/agentic"
+  },
+  "tools": [
+    {
+      "name": "tool_search",
+      "description": "Search the Binance tool catalog by category. Returns tool names, descriptions and input schemas that can be run with tool_execute. Categories: market, account, trade, transfer, convert, futures, margin, wallet, analysis.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Tool category to list",
+            "enum": [
+              "market",
+              "account",
+              "trade",
+              "transfer",
+              "convert",
+              "futures",
+              "margin",
+              "wallet",
+              "analysis"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "description": "Optional free-text filter on tool name / description"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor from a previous call"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "tool_execute",
+      "description": "Execute a tool from the Binance catalog by name with the given arguments (e.g. toolName=spot.ticker24hr, arguments={symbol: 'BTCUSDT'}). Write tools (orders, transfers) require the user's explicit confirmation first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "toolName": {
+            "type": "string",
+            "description": "Catalog tool name, e.g. spot.newOrder"
+          },
+          "arguments": {
+            "type": "object",
+            "description": "Arguments for the tool",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "toolName"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.ticker24hr",
+      "description": "24hr rolling window price change statistics for a Spot symbol (or all symbols).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of symbols"
+          },
+          "type": {
+            "type": "string",
+            "description": "FULL or MINI",
+            "enum": [
+              "FULL",
+              "MINI"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.tickerPrice",
+      "description": "Latest price for a Spot symbol or symbols.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of symbols"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.ticker",
+      "description": "Rolling window price change statistics (windowSize e.g. 1m, 1h, 1d).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "windowSize": {
+            "type": "string",
+            "description": "Window size, e.g. 1h"
+          },
+          "type": {
+            "type": "string",
+            "description": "FULL or MINI",
+            "enum": [
+              "FULL",
+              "MINI"
+            ]
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.bookTicker",
+      "description": "Best bid/ask price and quantity for a Spot symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of symbols"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.depth",
+      "description": "Spot order book (bids and asks).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Depth levels: 5,10,20,50,100,500,1000,5000"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.klines",
+      "description": "Spot kline/candlestick bars for a symbol and interval (1m,5m,15m,1h,4h,1d,...).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Kline interval, e.g. 1h"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "Time zone offset, default 0 (UTC)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          }
+        },
+        "required": [
+          "symbol",
+          "interval"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.uiKlines",
+      "description": "Spot klines optimised for presentation (same parameters as spot.klines).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Kline interval"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          }
+        },
+        "required": [
+          "symbol",
+          "interval"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.aggTrades",
+      "description": "Compressed/aggregate trades for a Spot symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "fromId": {
+            "type": "integer",
+            "description": "Aggregate trade id to fetch from"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.avgPrice",
+      "description": "Current average price for a Spot symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.exchangeInfo",
+      "description": "Spot exchange information: symbols, status, order types and trading filters (PRICE_FILTER, LOT_SIZE, NOTIONAL).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of symbols"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permission filter, e.g. SPOT"
+          },
+          "showPermissionSets": {
+            "type": "boolean",
+            "description": "Include permissionSets"
+          },
+          "symbolStatus": {
+            "type": "string",
+            "description": "Filter by status, e.g. TRADING"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.getAccount",
+      "description": "Spot account information for the Agentic sub-account: balances, commission rates, permissions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "omitZeroBalances": {
+            "type": "boolean",
+            "description": "Omit zero balances"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.newOrder",
+      "description": "Place a new Spot order. Requires the user's explicit confirmation of symbol, side, type, quantity and price before calling. Types: LIMIT (timeInForce, quantity, price), MARKET (quantity or quoteOrderQty), STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT, LIMIT_MAKER. Quantity must respect LOT_SIZE stepSize and NOTIONAL minNotional.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "side": {
+            "type": "string",
+            "description": "BUY or SELL",
+            "enum": [
+              "BUY",
+              "SELL"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "Order type",
+            "enum": [
+              "LIMIT",
+              "MARKET",
+              "STOP_LOSS",
+              "STOP_LOSS_LIMIT",
+              "TAKE_PROFIT",
+              "TAKE_PROFIT_LIMIT",
+              "LIMIT_MAKER"
+            ]
+          },
+          "timeInForce": {
+            "type": "string",
+            "description": "GTC, IOC or FOK",
+            "enum": [
+              "GTC",
+              "IOC",
+              "FOK"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Order quantity in base asset"
+          },
+          "quoteOrderQty": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "MARKET orders: amount of quote asset to spend/receive"
+          },
+          "price": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Limit price"
+          },
+          "newClientOrderId": {
+            "type": "string",
+            "description": "Unique id for the order (max 36 chars); auto-generated if not sent"
+          },
+          "strategyId": {
+            "type": "integer"
+          },
+          "strategyType": {
+            "type": "integer"
+          },
+          "stopPrice": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Trigger price for STOP_LOSS/TAKE_PROFIT orders"
+          },
+          "trailingDelta": {
+            "type": "integer"
+          },
+          "icebergQty": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Iceberg quantity"
+          },
+          "newOrderRespType": {
+            "type": "string",
+            "description": "ACK, RESULT or FULL",
+            "enum": [
+              "ACK",
+              "RESULT",
+              "FULL"
+            ]
+          },
+          "selfTradePreventionMode": {
+            "type": "string",
+            "description": "EXPIRE_TAKER, EXPIRE_MAKER, EXPIRE_BOTH, NONE"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol",
+          "side",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.newOrderTest",
+      "description": "Test a new Spot order without sending it to the matching engine (validates parameters and filters).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "side": {
+            "type": "string",
+            "description": "BUY or SELL",
+            "enum": [
+              "BUY",
+              "SELL"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "Order type"
+          },
+          "timeInForce": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Quantity"
+          },
+          "quoteOrderQty": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Quote quantity"
+          },
+          "price": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Price"
+          },
+          "newClientOrderId": {
+            "type": "string"
+          },
+          "stopPrice": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Stop price"
+          },
+          "computeCommissionRates": {
+            "type": "boolean",
+            "description": "Return commission rates"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol",
+          "side",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.deleteOrder",
+      "description": "Cancel an active Spot order by orderId or origClientOrderId. Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer",
+            "description": "Order id"
+          },
+          "origClientOrderId": {
+            "type": "string",
+            "description": "Client order id"
+          },
+          "newClientOrderId": {
+            "type": "string"
+          },
+          "cancelRestrictions": {
+            "type": "string",
+            "description": "ONLY_NEW or ONLY_PARTIALLY_FILLED"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.deleteOpenOrders",
+      "description": "Cancel all open Spot orders on a symbol. Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.getOrder",
+      "description": "Query a Spot order's status by orderId or origClientOrderId.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer",
+            "description": "Order id"
+          },
+          "origClientOrderId": {
+            "type": "string",
+            "description": "Client order id"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.getOpenOrders",
+      "description": "All open Spot orders (optionally for one symbol).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.allOrders",
+      "description": "All Spot orders for a symbol: active, canceled or filled.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer",
+            "description": "Return orders >= this id"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.myTrades",
+      "description": "Spot trades (fills) for the account and symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer",
+            "description": "Filter by order id"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "fromId": {
+            "type": "integer",
+            "description": "Trade id to fetch from"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "spot.rateLimitOrder",
+      "description": "Current unfilled order count and order rate limits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.exchangeInfo",
+      "description": "USDⓈ-M Futures exchange information: symbols, precision, filters, leverage brackets.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.depth",
+      "description": "USDⓈ-M Futures order book.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "5, 10, 20, 50, 100, 500, 1000"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.klines",
+      "description": "USDⓈ-M Futures klines/candlesticks.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Interval, e.g. 1h"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          }
+        },
+        "required": [
+          "symbol",
+          "interval"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.symbolPriceTicker",
+      "description": "Latest USDⓈ-M Futures price for a symbol (or all).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.ticker24hr",
+      "description": "USDⓈ-M Futures 24hr price change statistics.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.bookTicker",
+      "description": "USDⓈ-M Futures best bid/ask.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.markPrice",
+      "description": "USDⓈ-M Futures mark price, index price, funding rate and next funding time (premium index).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.fundingRate",
+      "description": "USDⓈ-M Futures funding rate history.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.openInterest",
+      "description": "Present open interest of a USDⓈ-M Futures symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.account",
+      "description": "USDⓈ-M Futures account: balances, margin, unrealized PnL and positions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.balance",
+      "description": "USDⓈ-M Futures wallet balances.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.positionRisk",
+      "description": "USDⓈ-M Futures position information: size, entry, mark, liquidation price, leverage, margin.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.changeLeverage",
+      "description": "Change initial leverage for a USDⓈ-M Futures symbol (1-125). Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "leverage": {
+            "type": "integer",
+            "description": "Target leverage"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol",
+          "leverage"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.changeMarginType",
+      "description": "Change margin type (ISOLATED / CROSSED) for a USDⓈ-M Futures symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "marginType": {
+            "type": "string",
+            "description": "ISOLATED or CROSSED",
+            "enum": [
+              "ISOLATED",
+              "CROSSED"
+            ]
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol",
+          "marginType"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.newOrder",
+      "description": "Place a USDⓈ-M Futures order. Requires the user's explicit confirmation of symbol, side, type, quantity, price and leverage before calling. Types: LIMIT, MARKET, STOP, STOP_MARKET, TAKE_PROFIT, TAKE_PROFIT_MARKET, TRAILING_STOP_MARKET.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "side": {
+            "type": "string",
+            "description": "BUY or SELL",
+            "enum": [
+              "BUY",
+              "SELL"
+            ]
+          },
+          "positionSide": {
+            "type": "string",
+            "description": "BOTH (one-way), LONG or SHORT (hedge)"
+          },
+          "type": {
+            "type": "string",
+            "description": "Order type",
+            "enum": [
+              "LIMIT",
+              "MARKET",
+              "STOP",
+              "STOP_MARKET",
+              "TAKE_PROFIT",
+              "TAKE_PROFIT_MARKET",
+              "TRAILING_STOP_MARKET"
+            ]
+          },
+          "timeInForce": {
+            "type": "string",
+            "description": "GTC, IOC, FOK, GTX or GTD"
+          },
+          "quantity": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Contract quantity in base asset"
+          },
+          "reduceOnly": {
+            "type": "string",
+            "description": "true or false",
+            "enum": [
+              "true",
+              "false"
+            ]
+          },
+          "price": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Limit price"
+          },
+          "newClientOrderId": {
+            "type": "string",
+            "description": "Unique id (max 36 chars)"
+          },
+          "stopPrice": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Trigger price for STOP/TAKE_PROFIT orders"
+          },
+          "closePosition": {
+            "type": "string",
+            "description": "true to close the whole position (STOP_MARKET/TAKE_PROFIT_MARKET)",
+            "enum": [
+              "true",
+              "false"
+            ]
+          },
+          "activationPrice": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "TRAILING_STOP_MARKET activation price"
+          },
+          "callbackRate": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "TRAILING_STOP_MARKET callback rate"
+          },
+          "workingType": {
+            "type": "string",
+            "description": "CONTRACT_PRICE or MARK_PRICE",
+            "enum": [
+              "CONTRACT_PRICE",
+              "MARK_PRICE"
+            ]
+          },
+          "priceProtect": {
+            "type": "string",
+            "description": "true or false"
+          },
+          "newOrderRespType": {
+            "type": "string",
+            "description": "ACK or RESULT",
+            "enum": [
+              "ACK",
+              "RESULT"
+            ]
+          },
+          "priceMatch": {
+            "type": "string"
+          },
+          "selfTradePreventionMode": {
+            "type": "string"
+          },
+          "goodTillDate": {
+            "type": "integer"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol",
+          "side",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.cancelOrder",
+      "description": "Cancel an active USDⓈ-M Futures order. Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer",
+            "description": "Order id"
+          },
+          "origClientOrderId": {
+            "type": "string",
+            "description": "Client order id"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.cancelAllOpenOrders",
+      "description": "Cancel all open USDⓈ-M Futures orders on a symbol. Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.getOrder",
+      "description": "Query a USDⓈ-M Futures order.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer",
+            "description": "Order id"
+          },
+          "origClientOrderId": {
+            "type": "string",
+            "description": "Client order id"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.openOrders",
+      "description": "Current open USDⓈ-M Futures orders.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.allOrders",
+      "description": "All USDⓈ-M Futures orders for a symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.userTrades",
+      "description": "USDⓈ-M Futures account trade list (fills) for a symbol.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "orderId": {
+            "type": "integer"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "fromId": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "futures_usds.income",
+      "description": "USDⓈ-M Futures income history: REALIZED_PNL, FUNDING_FEE, COMMISSION, TRANSFER, ...",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "incomeType": {
+            "type": "string",
+            "description": "Income type filter"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "wallet.accountStatus",
+      "description": "Account status of the Agentic sub-account.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "wallet.allCoinsInformation",
+      "description": "Information of all coins available: networks, deposit/withdraw status, fees.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "wallet.queryUserWalletBalance",
+      "description": "Balance of every wallet (Spot, Futures, Margin, Earn, Funding) in BTC or the quoteAsset.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "quoteAsset": {
+            "type": "string",
+            "description": "Quote asset for valuation, default BTC"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "wallet.userUniversalTransfer",
+      "description": "Transfer funds between wallets inside the Agentic sub-account, e.g. type=MAIN_UMFUTURE moves from Spot to USDⓈ-M Futures, UMFUTURE_MAIN moves back. Withdrawals to external addresses are not possible. Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Transfer type",
+            "enum": [
+              "MAIN_UMFUTURE",
+              "UMFUTURE_MAIN",
+              "MAIN_CMFUTURE",
+              "CMFUTURE_MAIN",
+              "MAIN_MARGIN",
+              "MARGIN_MAIN"
+            ]
+          },
+          "asset": {
+            "type": "string",
+            "description": "Asset, e.g. USDT"
+          },
+          "amount": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Amount to transfer"
+          },
+          "fromSymbol": {
+            "type": "string"
+          },
+          "toSymbol": {
+            "type": "string"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "type",
+          "asset",
+          "amount"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "wallet.queryUserUniversalTransferHistory",
+      "description": "History of universal transfers.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Transfer type"
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "current": {
+            "type": "integer",
+            "description": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Page size"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "wallet.dailyAccountSnapshot",
+      "description": "Daily account snapshot (SPOT, MARGIN or FUTURES).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "SPOT, MARGIN or FUTURES",
+            "enum": [
+              "SPOT",
+              "MARGIN",
+              "FUTURES"
+            ]
+          },
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "wallet.getApiKeyPermission",
+      "description": "Permissions granted to the current authorization.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "convert.exchangeInfo",
+      "description": "Convert pairs and limits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fromAsset": {
+            "type": "string",
+            "description": "From asset"
+          },
+          "toAsset": {
+            "type": "string",
+            "description": "To asset"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "convert.getQuote",
+      "description": "Request a Convert quote (valid for validTime, default 10s). Accept it with convert.acceptQuote.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fromAsset": {
+            "type": "string",
+            "description": "From asset"
+          },
+          "toAsset": {
+            "type": "string",
+            "description": "To asset"
+          },
+          "fromAmount": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Amount of fromAsset"
+          },
+          "toAmount": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Amount of toAsset"
+          },
+          "walletType": {
+            "type": "string",
+            "description": "SPOT or FUNDING"
+          },
+          "validTime": {
+            "type": "string",
+            "description": "10s, 30s, 1m or 2m"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "fromAsset",
+          "toAsset"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "convert.acceptQuote",
+      "description": "Accept a Convert quote and execute the conversion. Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "description": "Quote id from convert.getQuote"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "quoteId"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "convert.orderStatus",
+      "description": "Status of a Convert order.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "Order id"
+          },
+          "quoteId": {
+            "type": "string",
+            "description": "Quote id"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "convert.tradeFlow",
+      "description": "Convert trade history.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "startTime": {
+            "type": "integer",
+            "description": "Start time in milliseconds since epoch"
+          },
+          "endTime": {
+            "type": "integer",
+            "description": "End time in milliseconds since epoch"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of rows to return"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "startTime",
+          "endTime"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "margin.account",
+      "description": "Cross Margin account details.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "margin.newOrder",
+      "description": "Place a Margin order. Requires user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol, e.g. BTCUSDT"
+          },
+          "side": {
+            "type": "string",
+            "description": "BUY or SELL"
+          },
+          "type": {
+            "type": "string",
+            "description": "Order type"
+          },
+          "quantity": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Quantity"
+          },
+          "price": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Price"
+          },
+          "timeInForce": {
+            "type": "string"
+          },
+          "isIsolated": {
+            "type": "string",
+            "description": "TRUE or FALSE"
+          },
+          "sideEffectType": {
+            "type": "string"
+          },
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "required": [
+          "symbol",
+          "side",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "sub_account.getMainAccountAsset",
+      "description": "Read-only view of the main account assets (only if the user granted it).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recvWindow": {
+            "type": "integer",
+            "description": "recvWindow in milliseconds (max 60000)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "analysis.getTokenAiReport",
+      "description": "AI-generated research report for a token.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Token symbol, e.g. BTC"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

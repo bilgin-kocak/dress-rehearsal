@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dress Rehearsal — twin</title>
+<style>
+:root{
+  --bg:#0b0e11;--panel:#12161b;--panel2:#171c22;--line:#232a32;--text:#e6e8ea;--muted:#8a94a0;--dim:#5c6670;
+  --accent:#F0B90B;--red:#f6465d;--green:#0ecb81;--blue:#3d8bff;
+  --mono:"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:12px;overflow-x:hidden}
+body{display:flex;flex-direction:column;height:100vh}
+.num,.mono,td.n,th.n,.tool,.pill.code{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:14px;padding:0 14px;height:46px;border-bottom:1px solid var(--line);background:#0e1216;flex:none}
+.brand{font-weight:800;letter-spacing:.18em;font-size:13px;color:var(--text)}
+.brand small{display:block;letter-spacing:.02em;font-weight:400;color:var(--muted);font-size:10px;margin-top:1px}
+.badge{font-family:var(--mono);font-weight:800;font-size:15px;letter-spacing:.14em;padding:5px 12px;border-radius:3px;border:1px solid;line-height:1}
+.badge.PAPER{color:#111;background:var(--accent);border-color:var(--accent)}
+.badge.SHADOW{color:#06120c;background:var(--green);border-color:var(--green)}
+.badge.REPLAY{color:#eaf1ff;background:#1f4f9c;border-color:#2f6bd0}
+.badge.LIVE{color:#fff;background:var(--red);border-color:var(--red)}
+.hstat{display:flex;flex-direction:column;line-height:1.15}
+.hstat .l{color:var(--dim);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em}
+.hstat .v{font-family:var(--mono);font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:2px;font-size:10.5px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.good{border-color:rgba(14,203,129,.45);color:var(--green);background:rgba(14,203,129,.07)}
+.pill.bad{border-color:rgba(246,70,93,.5);color:var(--red);background:rgba(246,70,93,.08)}
+.pill.warn{border-color:rgba(240,185,11,.5);color:var(--accent);background:rgba(240,185,11,.07)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim);display:inline-block}
+.dot.on{background:var(--green)}.dot.off{background:var(--red)}.dot.mid{background:var(--accent)}
+.spacer{flex:1}
+#banner{display:none;background:var(--red);color:#fff;font-weight:700;letter-spacing:.06em;padding:6px 14px;font-size:12px;flex:none}
+#banner.show{display:block}
+main{flex:1;min-height:0;display:grid;gap:8px;padding:8px;
+  grid-template-columns:5fr 7fr;
+  grid-template-rows:minmax(250px,1.3fr) minmax(200px,1fr) minmax(150px,.7fr)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.ph{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex:none;white-space:nowrap;overflow:hidden}
+.ph b{color:var(--text);font-weight:700}
+.pb{flex:1;min-height:0;overflow:auto;padding:8px 10px}
+.pb.tight{padding:0}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{color:var(--dim);font-weight:500;text-align:left;padding:3px 6px;border-bottom:1px solid var(--line);font-size:10px;text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0;background:var(--panel)}
+td{padding:3px 6px;border-bottom:1px solid #1a2026;white-space:nowrap}
+th.n,td.n{text-align:right}
+tr:hover td{background:#171d24}
+.muted{color:var(--muted)}.dim{color:var(--dim)}
+.pos{color:var(--green)}.neg{color:var(--red)}.acc{color:var(--accent)}
+.big{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:-.01em;line-height:1}
+.sub{font-family:var(--mono);font-size:12px;margin-top:4px}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 2px}
+.kv div{background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:4px 8px}
+.kv .l{color:var(--dim);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em}
+.kv .v{font-family:var(--mono);font-size:13px;margin-top:2px}
+.sec{color:var(--dim);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px}
+.row{display:flex;align-items:center;gap:8px;padding:3px 10px;border-bottom:1px solid #1a2026;font-size:11px;min-height:22px}
+.row .t{color:var(--dim);font-family:var(--mono);width:62px;flex:none}
+.row .tool{flex:none;min-width:190px;color:var(--text)}
+.row .args{color:var(--dim);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-size:10.5px}
+.row .ms{color:var(--dim);font-family:var(--mono);width:54px;text-align:right;flex:none}
+.row.err{background:rgba(246,70,93,.07)}
+.row.err .tool{color:#ffb2bd}
+.pill.st{font-family:var(--mono);font-size:10px;padding:1px 6px;flex:none}
+.pill.ok{border-color:rgba(14,203,129,.4);color:var(--green)}
+.pill.error{border-color:rgba(246,70,93,.6);color:var(--red);background:rgba(246,70,93,.12)}
+.pill.pending,.pill.declined{border-color:rgba(240,185,11,.5);color:var(--accent)}
+.tag{font-size:9px;padding:1px 4px;border:1px solid var(--line);border-radius:2px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;flex:none}
+.tag.shadow{color:var(--green);border-color:rgba(14,203,129,.4)}
+.tag.liq{color:var(--red);border-color:rgba(246,70,93,.6)}
+canvas{width:100%;height:100%;display:block}
+.legend{display:flex;gap:14px;font-size:10.5px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:14px;height:2px;margin-right:6px;vertical-align:middle}
+.gate{font-family:var(--mono);font-weight:800;font-size:16px;letter-spacing:.14em;padding:4px 10px;border-radius:3px}
+.gate.PASS{background:var(--green);color:#06120c}.gate.FAIL{background:var(--red);color:#fff}
+.crit{display:grid;grid-template-columns:16px 1fr auto auto;gap:4px 8px;font-size:11px;align-items:center}
+.crit .n{font-family:var(--mono)}
+.crit .ok{color:var(--green)}.crit .no{color:var(--red)}
+button{background:var(--accent);color:#111;border:0;border-radius:3px;font-weight:700;font-size:11px;padding:6px 10px;cursor:pointer;font-family:var(--sans);letter-spacing:.04em}
+button:hover{filter:brightness(1.08)}
+button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(240,185,11,.5)}
+pre.cmd{background:#0b0e11;border:1px solid var(--line);border-radius:3px;padding:6px 8px;margin:6px 0;font-family:var(--mono);font-size:10.5px;color:var(--text);overflow:auto;white-space:pre}
+.ev{display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid #1a2026;font-size:11px}
+.ev .k{font-family:var(--mono);font-weight:700;min-width:120px}
+.ev.LIQUIDATION .k{color:var(--red)}
+.ev.policy_violation .k,.ev.twin_unsupported .k{color:var(--accent)}
+.ev .d{color:var(--muted);font-family:var(--mono);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{color:var(--dim);padding:10px 0;font-style:italic}
+.liqwarn td.liq{color:var(--red);font-weight:700}
+#rec{color:var(--muted);font-size:11px;line-height:1.45}
+#rec li{margin:2px 0}
+#disc{display:none}
+#disc.show{display:inline-flex}
+.split{display:flex;flex-direction:column;min-height:0;height:100%}
+.split .top{flex:0 0 auto;max-height:42%;overflow:auto;border-bottom:1px solid var(--line)}
+.split .bot{flex:1 1 auto;min-height:0;overflow:auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">DRESS REHEARSAL<small id="srv">binance-mcp-server · paper twin</small></div>
+  <div id="mode" class="badge PAPER">PAPER</div>
+  <div class="hstat"><span class="l">virtual clock (UTC)</span><span class="v" id="clock">—</span></div>
+  <div class="hstat" id="replayBox" style="display:none"><span class="l">replay</span><span class="v" id="replay">—</span></div>
+  <div class="hstat"><span class="l">session</span><span class="v" id="sess">—</span></div>
+  <span id="schema" class="pill">schema —</span>
+  <div class="spacer"></div>
+  <span class="pill"><span class="dot" id="wsSpot"></span>spot ws <span class="dot" id="wsUsdm" style="margin-left:6px"></span>usdm ws</span>
+  <span id="disc" class="pill bad">● disconnected</span>
+  <span class="pill mono" id="calls">calls 0 · rej 0</span>
+</header>
+<div id="banner">SCHEMA NOT MIRRORED — serving schemas/fallback_tools.json · fidelity unknown · run <span class="mono">rehearsal schema dump</span></div>
+
+<main>
+  <!-- row 1 -->
+  <section class="panel">
+    <div class="ph"><b>Equity</b><span id="eqNote" class="dim"></span></div>
+    <div class="pb">
+      <div class="big" id="equity">—</div>
+      <div class="sub" id="delta">—</div>
+      <div class="kv">
+        <div><div class="l">Spot value</div><div class="v" id="spotv">—</div></div>
+        <div><div class="l">Futures wallet</div><div class="v" id="futw">—</div></div>
+        <div><div class="l">Unrealized PnL</div><div class="v" id="upnl">—</div></div>
+      </div>
+      <div class="sec">USDⓈ-M positions <span class="mono muted" id="futline"></span></div>
+      <table><thead><tr><th>Symbol</th><th class="n">Size</th><th class="n">Entry</th><th class="n">Mark</th><th class="n">uPnL</th><th class="n">Liq</th><th class="n">Lev</th><th class="n">Margin</th></tr></thead><tbody id="pos"></tbody></table>
+      <div class="sec">Spot balances</div>
+      <table><thead><tr><th>Asset</th><th class="n">Free</th><th class="n">Locked</th><th class="n">Price</th><th class="n">Value USDT</th></tr></thead><tbody id="bal"></tbody></table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><b>Equity curve</b><div class="spacer"></div><div class="legend" id="legend"><span><i style="background:var(--accent)"></i>paper</span><span id="liveLeg" style="display:none"><i style="background:var(--green)"></i>live</span><span><i style="background:var(--dim);height:1px;border-top:1px dashed var(--dim)"></i>initial</span></div></div>
+    <div class="pb tight" style="padding:6px 8px 4px 4px"><canvas id="chart"></canvas></div>
+  </section>
+
+  <!-- row 2 -->
+  <section class="panel">
+    <div class="ph"><b>Tool calls</b><span class="mono" id="callstat"></span><div class="spacer"></div><span class="dim">last 50 ↓</span></div>
+    <div class="pb tight" id="calls_list"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><b>Orders &amp; fills</b><span class="dim" id="oo_count"></span></div>
+    <div class="pb tight split">
+      <div class="top">
+        <table><thead><tr><th>Mkt</th><th>Symbol</th><th>Side</th><th>Type</th><th class="n">Price</th><th class="n">Stop</th><th class="n">Qty</th><th class="n">Filled</th><th>Status</th><th>Time</th></tr></thead><tbody id="oo"></tbody></table>
+      </div>
+      <div class="bot">
+        <table><thead><tr><th>Time</th><th>Mkt</th><th>Symbol</th><th>Side</th><th class="n">Price</th><th class="n">Qty</th><th class="n">Quote</th><th class="n">Fee</th><th class="n">Slip bps</th><th>Liq</th><th class="n">rPnL</th></tr></thead><tbody id="fills"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- row 3 -->
+  <section class="panel">
+    <div class="ph"><b>Go-live report</b><span id="runid" class="mono dim"></span><div class="spacer"></div><span id="gate"></span></div>
+    <div class="pb" id="report"><div class="empty">no rehearsal yet — run <span class="mono">rehearsal run --strategy prompts/… --sessions 3</span></div></div>
+  </section>
+
+  <section class="panel" id="evPanel">
+    <div class="ph"><b>Events</b></div>
+    <div class="pb" id="events"></div>
+  </section>
+
+  <section class="panel" id="shPanel" style="display:none">
+    <div class="ph"><b>Shadow divergence</b><span class="dim" id="shcount"></span><div class="spacer"></div><span class="tag shadow">live ↔ paper</span></div>
+    <div class="pb tight split">
+      <div class="top" style="max-height:100%">
+        <table><thead><tr><th>Time</th><th>Tool</th><th>Sym</th><th>Real</th><th>Sim</th><th class="n">Δ avg px bps</th><th class="n">Δ qty</th><th class="n">sim ms</th></tr></thead><tbody id="div"></tbody></table>
+      </div>
+      <div class="bot" style="padding:6px 10px;font-size:11px" id="cal"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const g=(o,...ks)=>{let c=o;for(const k of ks){if(c==null)return undefined;c=c[k];}return c;};
+const num=x=>{const n=Number(x);return Number.isFinite(n)?n:0;};
+const f2=x=>num(x).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fp=x=>{if(x==null||x==='')return '—';const n=Number(x);if(!Number.isFinite(n))return String(x);return n.toLocaleString('en-US',{maximumFractionDigits:8});};
+const fq=x=>{if(x==null||x==='')return '—';const n=Number(x);if(!Number.isFinite(n))return String(x);return n.toLocaleString('en-US',{maximumFractionDigits:6});};
+const tm=ts=>{const n=Number(ts);if(!Number.isFinite(n)||n<=0)return '—';try{return new Date(n).toISOString().substr(11,8);}catch(e){return '—';}};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sgn=(v,d=2)=>(v>0?'+':'')+num(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const cls=v=>v>0?'pos':(v<0?'neg':'muted');
+
+let state=null, lastOk=0, copied=0;
+
+async function poll(){
+  try{
+    const r=await fetch('/api/state',{cache:'no-store'});
+    if(!r.ok)throw new Error(r.status);
+    state=await r.json(); lastOk=Date.now();
+    $('disc').classList.remove('show');
+    render(state);
+  }catch(e){
+    if(Date.now()-lastOk>2500)$('disc').classList.add('show');
+  }
+}
+
+function render(s){
+  try{header(s);}catch(e){console.error('header',e);}
+  try{equity(s);}catch(e){console.error('equity',e);}
+  try{chart(s);}catch(e){console.error('chart',e);}
+  try{calls(s);}catch(e){console.error('calls',e);}
+  try{orders(s);}catch(e){console.error('orders',e);}
+  try{report(s);}catch(e){console.error('report',e);}
+  try{events(s);}catch(e){console.error('events',e);}
+  try{shadow(s);}catch(e){console.error('shadow',e);}
+}
+
+function header(s){
+  const mode=(s.mode||'PAPER').toUpperCase();
+  const b=$('mode'); b.textContent=mode; b.className='badge '+mode;
+  $('clock').textContent=(s.clock_iso||'—').replace('T',' ').replace('Z','');
+  const rp=g(s,'feed','replay_progress');
+  const isReplay=g(s,'feed','mode')==='replay';
+  $('replayBox').style.display=isReplay?'':'none';
+  if(isReplay){const pct=rp&&rp.pct!=null?rp.pct.toFixed(1)+'%':'0%';const sp=g(s,'feed','replay_speed');$('replay').textContent=pct+(sp?' · '+sp+'×':'')+(g(s,'feed','replay_done')?' · done':'');}
+  const cur=g(s,'session','current'); $('sess').textContent=cur?String(cur).slice(0,22):'— (no session)';
+  const sc=s.schema||{}; const pill=$('schema');
+  if(sc.source==='mirrored'){pill.className='pill good';pill.textContent='schema mirrored from tools.json'+(sc.mirrored_at?' '+String(sc.mirrored_at).slice(0,10):'')+' · '+(sc.tool_count||0)+' tools';$('banner').classList.remove('show');}
+  else{pill.className='pill bad';pill.textContent='schema: fallback · '+(sc.tool_count||0)+' tools';$('banner').classList.add('show');}
+  const ws=g(s,'feed','ws')||{};
+  const dot=(el,v)=>{el.className='dot '+(v==='connected'?'on':(v==='idle'||isReplay?'mid':(v?'off':'')));};
+  dot($('wsSpot'),isReplay?'idle':ws.spot);dot($('wsUsdm'),isReplay?'idle':ws.usdm);
+  const srv=s.server||{}; const rate=srv.calls?(100*num(srv.errors)/num(srv.calls)):0;
+  $('calls').textContent='calls '+(srv.calls||0)+' · rej '+(srv.errors||0)+' · '+rate.toFixed(0)+'%';
+  $('srv').textContent=(srv.name||'binance-mcp-server')+' · paper twin v'+(srv.version||'')+' · confirm='+(srv.confirm_mode||'none');
+}
+
+function equity(s){
+  const e=s.equity||{}; const eq=num(e.equity), init=num(e.initial);
+  $('equity').textContent=f2(eq)+' USDT';
+  const d=eq-init, pct=init?100*d/init:0;
+  const del=$('delta'); del.textContent=sgn(d)+' USDT  ('+sgn(pct)+'%) vs initial '+f2(init); del.className='sub '+cls(d);
+  $('spotv').textContent=f2(e.spot_value);
+  $('futw').textContent=f2(e.usdm_wallet);
+  const u=num(e.usdm_unrealized); const uEl=$('upnl'); uEl.textContent=sgn(u); uEl.className='v '+cls(u);
+  const bal=g(s,'balances','spot')||[];
+  $('bal').innerHTML=bal.length?bal.map(b=>'<tr><td class="acc">'+esc(b.asset)+'</td><td class="n">'+fq(b.free)+'</td><td class="n">'+fq(b.locked)+'</td><td class="n dim">'+(b.price?fp(b.price):'—')+'</td><td class="n">'+f2(b.value_usdt)+'</td></tr>').join(''):'<tr><td colspan="5" class="empty">no balances</td></tr>';
+  const fw=g(s,'balances','usdm')||{};
+  $('futline').textContent='balance '+f2(fw.balance)+' · available '+f2(fw.availableBalance);
+  const pos=s.positions||[];
+  $('pos').innerHTML=pos.length?pos.map(p=>{
+    const amt=num(p.positionAmt), up=num(p.unRealizedProfit), mark=num(p.markPrice), liq=num(p.liquidationPrice);
+    const near=mark>0&&liq>0&&Math.abs(mark-liq)/mark<0.02;
+    return '<tr class="'+(near?'liqwarn':'')+'"><td class="acc">'+esc(p.symbol)+'</td><td class="n '+cls(amt)+'">'+fq(amt)+'</td><td class="n">'+fp(p.entryPrice)+'</td><td class="n">'+fp(mark)+'</td><td class="n '+cls(up)+'">'+sgn(up,4)+'</td><td class="n liq">'+fp(liq)+(near?' ⚠':'')+'</td><td class="n">'+esc(p.leverage)+'×</td><td class="n">'+f2(p.isolatedMargin)+'</td></tr>';
+  }).join(''):'<tr><td colspan="8" class="empty">no open positions</td></tr>';
+}
+
+// ---------------------------------------------------------------- chart
+function chart(s){
+  const cv=$('chart'); const box=cv.parentElement; const W=box.clientWidth-12, H=box.clientHeight-10;
+  if(W<50||H<30)return;
+  const dpr=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+'px';cv.style.height=H+'px';}
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const paper=(s.equity_curve||[]).filter(p=>Array.isArray(p)&&Number.isFinite(p[1]));
+  const live=(s.live_equity_curve||[]).filter(p=>Array.isArray(p)&&Number.isFinite(p[1]));
+  const showLive=live.length>1; $('liveLeg').style.display=showLive?'':'none';
+  const init=num(g(s,'equity','initial'));
+  if(paper.length<2){ctx.fillStyle='#5c6670';ctx.font='11px '+getComputedStyle(document.body).getPropertyValue('--sans');ctx.fillText('waiting for equity snapshots…',12,20);return;}
+  const all=paper.concat(showLive?live:[]);
+  let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;
+  for(const p of all){if(p[0]<xmin)xmin=p[0];if(p[0]>xmax)xmax=p[0];if(p[1]<ymin)ymin=p[1];if(p[1]>ymax)ymax=p[1];}
+  if(init>0){ymin=Math.min(ymin,init);ymax=Math.max(ymax,init);}
+  if(xmax===xmin)xmax=xmin+1000;
+  const pad=(ymax-ymin)*0.12||Math.max(1,ymax*0.002); ymin-=pad; ymax+=pad;
+  const L=52,R=8,T=8,B=20; const iw=W-L-R, ih=H-T-B;
+  const X=x=>L+(x-xmin)/(xmax-xmin)*iw, Y=y=>T+(1-(y-ymin)/(ymax-ymin))*ih;
+  ctx.font='10px '+getComputedStyle(document.body).getPropertyValue('--mono');
+  ctx.strokeStyle='#1c232a';ctx.lineWidth=1;ctx.fillStyle='#5c6670';ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){const v=ymin+(ymax-ymin)*i/4;const y=Math.round(Y(v))+.5;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(W-R,y);ctx.stroke();ctx.fillText(v.toFixed(2),L-6,y);}
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let i=0;i<=3;i++){const t=xmin+(xmax-xmin)*i/3;const x=Math.round(X(t))+.5;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ih);ctx.stroke();ctx.fillText(tm(t),Math.min(Math.max(x,L+24),W-R-24),T+ih+5);}
+  if(init>0){ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='#5c6670';ctx.beginPath();const y=Math.round(Y(init))+.5;ctx.moveTo(L,y);ctx.lineTo(W-R,y);ctx.stroke();ctx.restore();}
+  // liquidation markers
+  const ev=(s.events||[]).filter(e=>e&&e.kind==='LIQUIDATION'&&e.ts>=xmin&&e.ts<=xmax);
+  for(const e of ev){const x=Math.round(X(e.ts))+.5;ctx.strokeStyle='#f6465d';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ih);ctx.stroke();ctx.fillStyle='#f6465d';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('LIQ',x+3,T+2);}
+  const line=(pts,color,w)=>{ctx.strokeStyle=color;ctx.lineWidth=w;ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>{const x=X(p[0]),y=Y(p[1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();};
+  // paper area fill
+  ctx.save();ctx.beginPath();paper.forEach((p,i)=>{const x=X(p[0]),y=Y(p[1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.lineTo(X(paper[paper.length-1][0]),T+ih);ctx.lineTo(X(paper[0][0]),T+ih);ctx.closePath();ctx.fillStyle='rgba(240,185,11,.07)';ctx.fill();ctx.restore();
+  line(paper,'#F0B90B',1.6);
+  if(showLive)line(live,'#0ecb81',1.4);
+  const last=paper[paper.length-1]; ctx.fillStyle='#F0B90B';ctx.beginPath();ctx.arc(X(last[0]),Y(last[1]),2.5,0,Math.PI*2);ctx.fill();
+  ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(last[1].toFixed(2),Math.max(L+40,X(last[0])-4),Y(last[1])-3);
+}
+
+// ---------------------------------------------------------------- tool calls
+function calls(s){
+  const list=s.tool_calls||[];
+  const errs=list.filter(c=>c.status==='error').length;
+  $('callstat').textContent=list.length+' calls · '+errs+' rej'+(list.length?' · '+(100*errs/list.length).toFixed(0)+'%':'');
+  const argstr=a=>{if(!a||typeof a!=='object')return '';return Object.entries(a).filter(([k])=>!k.startsWith('_')).map(([k,v])=>k+'='+(typeof v==='object'?JSON.stringify(v):v)).join(' ');};
+  $('calls_list').innerHTML=list.length?list.map(c=>{
+    const st=c.status||'ok'; const err=st==='error';
+    const pill=err?'<span class="pill st error code">'+esc(c.error_code)+' '+esc((c.msg||'').slice(0,60))+'</span>':'<span class="pill st '+esc(st)+'">'+esc(st)+'</span>';
+    const via=g(c,'args','_via')?'<span class="tag">via '+esc(c.args._via)+'</span>':'';
+    const src=c.source&&c.source!=='agent'?'<span class="tag '+esc(c.source)+'">'+esc(c.source)+'</span>':'';
+    return '<div class="row '+(err?'err':'')+'"><span class="t">'+tm(c.ts)+'</span><span class="tool">'+esc(c.tool)+'</span>'+pill+via+src+'<span class="args" title="'+esc(argstr(c.args))+'">'+esc(argstr(c.args))+'</span><span class="ms">'+(c.latency_ms!=null?c.latency_ms+'ms':'')+'</span></div>';
+  }).join(''):'<div class="empty" style="padding:10px">no tool calls yet — point your agent at this twin</div>';
+}
+
+// ---------------------------------------------------------------- orders & fills
+function orders(s){
+  const oo=s.open_orders||[];
+  $('oo_count').textContent=oo.length+' open · '+(s.fills||[]).length+' recent fills';
+  $('oo').innerHTML=oo.length?oo.map(o=>'<tr><td class="dim">'+esc(o.market)+'</td><td class="acc">'+esc(o.symbol)+'</td><td class="'+(o.side==='BUY'?'pos':'neg')+'">'+esc(o.side)+'</td><td>'+esc(o.type)+'</td><td class="n">'+fp(o.price)+'</td><td class="n dim">'+(num(o.stop_price)?fp(o.stop_price):'—')+'</td><td class="n">'+fq(o.orig_qty)+'</td><td class="n">'+fq(o.executed_qty)+'</td><td>'+esc(o.status)+(o.triggered===false?' <span class="tag">armed</span>':'')+'</td><td class="dim">'+tm(o.created_at)+'</td></tr>').join(''):'<tr><td colspan="10" class="empty" style="padding:6px">no open orders</td></tr>';
+  const fills=s.fills||[];
+  $('fills').innerHTML=fills.length?fills.map(f=>{
+    const sl=f.slippage_bps==null?null:Number(f.slippage_bps); const slc=sl==null?'dim':(sl<0?'pos':(sl>0?'neg':'muted'));
+    const liq=f.source==='liquidation'; const rp=num(f.realized_pnl);
+    return '<tr'+(liq?' class="row err"':'')+'><td class="dim">'+tm(f.ts)+'</td><td class="dim">'+esc(f.market)+'</td><td class="acc">'+esc(f.symbol)+'</td><td class="'+(f.side==='BUY'?'pos':(f.side==='SELL'?'neg':'muted'))+'">'+esc(f.side)+'</td><td class="n">'+fp(f.price)+'</td><td class="n">'+fq(f.qty)+'</td><td class="n">'+f2(f.quote_qty)+'</td><td class="n dim">'+fq(f.commission)+' '+esc(f.commission_asset||'')+'</td><td class="n '+slc+'">'+(sl==null?'—':sgn(sl,2))+'</td><td>'+(liq?'<span class="tag liq">LIQ</span>':(f.is_maker?'<span class="tag">maker</span>':(f.source==='convert'?'<span class="tag">cvt</span>':'')))+'</td><td class="n '+cls(rp)+'">'+(f.market==='usdm'?sgn(rp,4):'')+'</td></tr>';
+  }).join(''):'<tr><td colspan="11" class="empty" style="padding:6px">no fills yet</td></tr>';
+}
+
+// ---------------------------------------------------------------- report
+function report(s){
+  const r=s.report; const gateEl=$('gate'); const box=$('report');
+  if(!r){gateEl.innerHTML='';$('runid').textContent='';if(!box.dataset.empty){box.innerHTML='<div class="empty">no rehearsal yet — run <span class="mono">rehearsal run --strategy prompts/strategy_funding_carry.md --sessions 3</span></div>';box.dataset.empty='1';}return;}
+  box.dataset.empty='';
+  const gate=r.gate||{}; const passed=!!gate.passed;
+  gateEl.innerHTML='<span class="gate '+(passed?'PASS':'FAIL')+'">'+(passed?'PASS':'FAIL')+'</span>';
+  $('runid').textContent=(r.run_id?'run '+r.run_id:'')+(g(r,'summary','sessions')!=null?' · '+g(r,'summary','sessions')+' sessions':'');
+  const key=JSON.stringify([r.run_id,gate.passed,(gate.criteria||[]).length,(r.recommendations||[]).length,copied]);
+  if(box.dataset.key===key)return; box.dataset.key=key;
+  let h='';
+  const crit=gate.criteria||[];
+  if(crit.length){h+='<div class="crit">'+crit.map(c=>'<span class="'+(c.ok?'ok':'no')+'">'+(c.ok?'✓':'✗')+'</span><span>'+esc(c.name)+'</span><span class="n '+(c.ok?'':'neg')+'">'+esc(fmtVal(c.value))+'</span><span class="n dim">'+esc(c.threshold!=null?'limit '+fmtVal(c.threshold):'')+'</span>').join('')+'</div>';}
+  if(!passed&&(gate.reasons||[]).length){h+='<div class="sec">Failing</div><ul id="rec" style="margin:0;padding-left:16px">'+gate.reasons.map(x=>'<li class="neg">'+esc(x)+'</li>').join('')+'</ul>';}
+  if((r.recommendations||[]).length){h+='<div class="sec">Recommendations</div><ul id="rec" style="margin:0;padding-left:16px">'+r.recommendations.slice(0,5).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';}
+  const flip=r.flip_commands||[];
+  if(flip.length){h+='<div class="sec">Flip to live</div><pre class="cmd">'+esc(flip.join('\n'))+'</pre><button id="copyFlip">'+(copied?'copied ✓':'Copy flip command')+'</button>';}
+  box.innerHTML=h||'<div class="empty">report has no gate data</div>';
+  const btn=$('copyFlip'); if(btn)btn.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(flip.join('\n')).then(()=>{copied=1;btn.textContent='copied ✓';setTimeout(()=>{copied=0;btn.textContent='Copy flip command';},2500);}).catch(()=>{btn.textContent='select & copy above';});};
+}
+function fmtVal(v){if(v==null)return '—';if(typeof v==='number')return Number.isInteger(v)?String(v):v.toFixed(v<1?3:2);return String(v);}
+
+// ---------------------------------------------------------------- events
+function events(s){
+  const ev=(s.events||[]).slice(0,8);
+  $('events').innerHTML=ev.length?ev.map(e=>{
+    const d=e.detail&&typeof e.detail==='object'?Object.entries(e.detail).map(([k,v])=>k+'='+(typeof v==='object'?JSON.stringify(v):v)).join(' '):'';
+    return '<div class="ev '+esc(e.kind)+'"><span class="dim mono">'+tm(e.ts)+'</span><span class="k">'+esc(e.kind)+'</span><span class="acc mono">'+esc(e.symbol||'')+'</span><span class="d" title="'+esc(d)+'">'+esc(d)+'</span></div>';
+  }).join(''):'<div class="empty">no events</div>';
+}
+
+// ---------------------------------------------------------------- shadow
+function shadow(s){
+  const sh=s.shadow||{}; const on=!!sh.active||s.mode==='SHADOW';
+  const p=$('shPanel'); const wasOn=p.style.display!=='none';
+  p.style.display=on?'':'none';
+  if(on!==wasOn){ // re-layout: 3 columns when shadow is on (row 3 = report | events | shadow)
+    document.querySelector('main').style.gridTemplateColumns=on?'4fr 3fr 5fr':'5fr 7fr';
+    relayout(on);
+  }
+  if(!on)return;
+  const dv=sh.divergences||[];
+  $('shcount').textContent=(sh.events||0)+' mirrored · '+dv.length+' writes';
+  $('div').innerHTML=dv.length?dv.map(d=>{
+    const bps=d.avg_price_diff_bps; const b=bps==null?'—':sgn(bps,2);
+    return '<tr><td class="dim">'+tm(d.ts)+'</td><td>'+esc(d.tool)+'</td><td class="acc">'+esc(d.symbol||'')+'</td><td class="'+(String(d.real_status||'').startsWith('ERROR')?'neg':'')+'">'+esc(d.real_status||'—')+'</td><td class="'+(d.status_match===false?'neg':'')+'">'+esc(d.sim_status||'—')+'</td><td class="n '+(bps==null?'dim':(Math.abs(bps)<2?'pos':'neg'))+'">'+b+'</td><td class="n">'+esc(d.executed_qty_diff==null?'—':fq(d.executed_qty_diff))+'</td><td class="n dim">'+esc(d.sim_latency_ms==null?'—':d.sim_latency_ms)+'</td></tr>';
+  }).join(''):'<tr><td colspan="8" class="empty" style="padding:6px">no write divergences yet</td></tr>';
+  const cal=sh.calibration||{};
+  let c='<span class="dim">TWIN CALIBRATION · '+(cal.samples||0)+' samples'+(cal.status_match_rate!=null?' · status match '+(100*cal.status_match_rate).toFixed(0)+'%':'')+'</span>';
+  if(cal.suggestion)c+='<div class="acc" style="margin-top:4px">'+esc(cal.suggestion)+'</div>';
+  if(cal.queue_note)c+='<div class="muted" style="margin-top:2px">'+esc(cal.queue_note)+'</div>';
+  if(!cal.suggestion&&!cal.queue_note)c+='<div class="muted" style="margin-top:4px">place a live order with shadow installed to see real vs twin fill prices</div>';
+  $('cal').innerHTML=c;
+}
+function relayout(on){
+  // Rows 1-2 always span 2 tracks when shadow is on (3 columns); row 3 = report | events | shadow.
+  const secs=document.querySelectorAll('main > section');
+  const span=on?'span 1':'';
+  // row1: equity (cols 1), curve (cols 2-3); row2: calls (1), orders (2-3); row3: report(1) events(2) shadow(3)
+  secs[0].style.gridColumn=on?'1':'';secs[1].style.gridColumn=on?'2 / span 2':'';
+  secs[2].style.gridColumn=on?'1':'';secs[3].style.gridColumn=on?'2 / span 2':'';
+  secs[4].style.gridColumn=on?'1':'';secs[5].style.gridColumn=on?'2':'';secs[6].style.gridColumn=on?'3':'';
+}
+
+poll(); setInterval(poll,1000);
+window.addEventListener('resize',()=>{if(state)try{chart(state);}catch(e){}});
+})();
+</script>
+</body>
+</html>
