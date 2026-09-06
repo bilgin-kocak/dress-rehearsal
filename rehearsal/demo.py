@@ -1,4 +1,7 @@
-"""`rehearsal demo`: replay twin + dashboard, seeded with a scripted "deliberately bad" run (gate FAIL).
+"""`rehearsal demo`: replay twin + dashboard, seeded with a SCRIPTED careless-agent run (gate FAIL).
+
+This is a demonstration of the dashboard and the gate, not an LLM session: the tool calls are replayed from
+BAD_SEQUENCE. Real agent runs (with a real failure and a real correction) come from `rehearsal coach`.
 
 No LLM is needed: the seed replays the exact tool-call sequence a careless agent produces, so the
 dashboard shows LOT_SIZE / precision rejections, a policy violation, a 75x long and (if the fixture
@@ -53,7 +56,7 @@ def seed_bad_run(rt: Runtime, run_id: str = "demo_bad", strategy: Path | None = 
     cfg = rt.cfg
     sid = f"{run_id}_s1"
     rt.engine.reset(keep_history=False)  # the demo always starts from a clean ledger
-    rt.engine.start_session(sid, run_id=run_id, label="session 1", reset=True,
+    rt.engine.start_session(sid, run_id=run_id, label="scripted demo", reset=True,
                             meta={"client": "scripted", "strategy": str(strategy) if strategy else "prompts/strategy_deliberately_bad.md",
                                   "confirmation": {"writes": 0, "restated": 0}, "exit_status": "success", "turns": 0})
     writes = 0

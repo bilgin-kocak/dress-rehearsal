@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "mcp__binance-mcp-server__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/Users/bilginkocak/hackathon/dress-rehersal/.venv/bin/python\" -m rehearsal.cli shadow hook --port 8765   # dress-rehearsal-shadow",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

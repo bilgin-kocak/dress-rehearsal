@@ -202,8 +202,46 @@ def run(
     _setup_logging(verbose)
     from rehearsal.rehearsal.runner import run_rehearsal
 
-    rc = run_rehearsal(cfg, Path(strategy), sessions, run_id=run_id)
+    report = run_rehearsal(cfg, Path(strategy), sessions, run_id=run_id)
+    raise typer.Exit(0 if report["gate"]["passed"] else 1)
+
+
+@app.command()
+def coach(
+    strategy: str = typer.Option(..., help="Strategy prompt file (v1)"),
+    sessions: int = typer.Option(3, help="Sessions per rehearsal run"),
+    dev_fixture: str = typer.Option("fixtures/replay/demo", help="Replay window used to find and fix failures"),
+    holdout_fixture: str = typer.Option("fixtures/replay/holdout", help="Replay window used ONLY to verify the correction ('' to skip)"),
+    max_iterations: int = typer.Option(2, help="Max corrections the agent may propose"),
+    coach_model: str = typer.Option("opus", help="Model for the diagnose/correct step"),
+    model: str = typer.Option(None, help="Model for the headless trading sessions (default: sonnet)"),
+    session_minutes: int = typer.Option(None),
+    max_turns: int = typer.Option(None),
+    speed: float = typer.Option(4.0, help="Replay speed"),
+    port: int = typer.Option(None, help="Base port; each run uses the next one"),
+    run_id: str = typer.Option(None),
+    use_api_key: bool = typer.Option(None, "--api-key/--no-api-key"),
+    config: str = typer.Option(None, "--config", "-c"),
+    verbose: bool = typer.Option(False, "-v"),
+) -> None:
+    """The Rehearsal Agent: rehearse → diagnose → propose a bounded fix → retest → verify on a held-out window."""
+    cfg = _cfg(config, runner__session_minutes=session_minutes, runner__max_turns=max_turns, runner__model=model,
+               runner__use_api_key=use_api_key, market__replay_speed=speed)
+    _setup_logging(verbose)
+    from rehearsal.rehearsal.coach import run_coach
+
+    rc = run_coach(cfg, Path(strategy), sessions, dev_fixture, holdout_fixture or None, max_iterations=max_iterations,
+                   run_id=run_id, coach_model=coach_model, base_port=port)
     raise typer.Exit(rc)
+
+
+@app.command()
+def doctor(config: str = typer.Option(None, "--config", "-c"), port: int = typer.Option(None)) -> None:
+    """Check the environment: Python, Claude CLI, auth, schema mirror, fixtures, twin reachability."""
+    cfg = _cfg(config, server__http_port=port)
+    from rehearsal.doctor import run_doctor
+
+    raise typer.Exit(run_doctor(cfg))
 
 
 @app.command()

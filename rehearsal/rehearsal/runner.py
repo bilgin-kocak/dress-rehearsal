@@ -44,7 +44,8 @@ def _wait_health(url: str, timeout: float = 20.0) -> bool:
     return False
 
 
-def run_rehearsal(cfg: Config, strategy: Path, sessions: int, run_id: str | None = None, rt: Runtime | None = None) -> int:
+def run_rehearsal(cfg: Config, strategy: Path, sessions: int, run_id: str | None = None, rt: Runtime | None = None) -> dict[str, Any]:
+    """Run N sessions, write the report, evaluate the gate. Returns the report dict (gate in report["gate"])."""
     run_id = run_id or time.strftime("run_%Y%m%d_%H%M%S")
     prompt = strategy.read_text()
     if cfg.runner.client in ("claude-code", "codex") and cfg.runner.preamble:
@@ -59,7 +60,7 @@ def run_rehearsal(cfg: Config, strategy: Path, sessions: int, run_id: str | None
     base = f"http://{cfg.server.http_host}:{cfg.server.http_port}"
     if not _wait_health(base):
         log.error("twin did not come up on %s", base)
-        return 2
+        raise RuntimeError(f"twin did not come up on {base}")
     mcp_url = base + "/mcp"
     adapter = get_adapter(cfg)
     log.info("run %s: %d session(s), client=%s, mode=%s, twin=%s, dashboard=%s/", run_id, sessions, adapter.name, cfg.market.mode, mcp_url, base)
@@ -89,4 +90,5 @@ def run_rehearsal(cfg: Config, strategy: Path, sessions: int, run_id: str | None
     print(f"report: {md}")
     if own_runtime:
         rt.stop()
-    return 0 if report["gate"]["passed"] else 1
+    report["_summary_cost"] = report["summary"].get("total_cost_usd")
+    return report

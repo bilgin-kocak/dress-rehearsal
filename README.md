@@ -1,21 +1,29 @@
 # Dress Rehearsal
 
-**A drop-in paper twin of the Binance Agent OS MCP server, plus a rehearsal harness that runs your
-agent against the twin, scores it, gates go-live, and then shadows it once it trades for real.**
+**Before you give your trading agent capital, give it a dress rehearsal. Find the mistakes, understand
+the failures, and retest the correction.**
 
 > Same agent. Same prompt. Change one URL.
 
+Dress Rehearsal is two things. A **paper twin** of the Binance Agent OS MCP server: the same 81 tools,
+the same hidden catalog, the same error envelope, mirrored from the live endpoint with zero drift, backed
+by the real order book and a simulated ledger. And a **Rehearsal Agent** that runs your strategy against
+the twin headlessly, explains the failure with the exact tool responses, rewrites only the strategy,
+retests it, and verifies the fix on a recorded market window it never saw. Pass, and you flip one URL;
+shadow mode then mirrors every live call back into the twin so you can see how wrong the paper fill was.
+
 ## Why
 
-Kraken's MCP ships a paper mode. Coinbase ships a sandbox. Binance Agent OS ships a **live** Agentic
-sub-account behind `https://agent.binance.com/mcp/agentic`: there is no testnet, no paper mode, and the
-only loss cap is the balance you transfer in. Your agent's first hallucinated `quantity` is a real order.
+Binance Agent OS hands an agent a **live**, funded sub-account behind `https://agent.binance.com/mcp/agentic`.
+Binance does run Spot and Futures testnets, but they are separate REST APIs with separate keys: the MCP
+endpoint your agent actually uses has no paper mode, and the testnets do not speak its tools. So the
+first time an agent sends a quantity rounded to the wrong step, oversizes an order, or forgets its open
+take-profit, it does so with real money. And even with a sandbox, a builder still needs the second half:
+a repeatable evaluation, a report that says *why* it failed, and proof that the correction holds on data
+the correction was not tuned on.
 
-Dress Rehearsal closes that gap without touching Binance's side. A local MCP server exposes **exactly
-the same tools** as the real endpoint (`spot.newOrder`, `spot.depth`, `futures_usds.newOrder`,
-`tool_search`, `tool_execute`, ...), backed by the **live public order book** and a **simulated ledger**.
-Any MCP client (Claude Code, Codex, Cursor, ChatGPT) points at the twin during development, gets a
-scored go-live report, then flips to the real URL.
+That is what Dress Rehearsal adds on top of the twin: repeatable agent evaluations, actionable failure
+reports, a bounded correction loop, and live-versus-paper comparison after the flip.
 
 ## Quickstart
 
@@ -29,12 +37,17 @@ claude mcp add binance-mcp-server --transport http http://127.0.0.1:8765/mcp    
 .venv/bin/rehearsal run --strategy prompts/strategy_simple_momentum.md --sessions 3   # 5. rehearse → report → gate
 ```
 
-No Binance account is needed for steps 3-5 (public market data only). `rehearsal demo` runs the whole
-thing from a recorded fixture in under two minutes on a clean clone:
+No Binance account is needed for steps 3-5 (public market data only). Three ways in, from easiest:
 
 ```bash
-./scripts/demo.sh        # replay twin + dashboard, pre-seeded with a deliberately bad agent run (gate FAIL)
+.venv/bin/rehearsal doctor                                   # environment check + the next command
+./scripts/demo.sh                                            # 2-minute dashboard walkthrough (scripted tool calls, labelled as such)
+.venv/bin/rehearsal coach --strategy prompts/strategy_momentum_v1.md   # the real thing: fail → diagnose → fix → verify (≈ $6 of LLM, 25 min)
+.venv/bin/rehearsal coach --strategy my_strategy.md          # bring your own strategy prompt
 ```
+
+Your strategy prompt is plain Markdown addressed to the agent, using the real tool names
+(`spot.newOrder`, `spot.exchangeInfo`, `futures_usds.newOrder`, ...). See `prompts/` for three examples.
 
 ## How it works
 
@@ -124,6 +137,23 @@ the latest gate result with a "copy flip command" button, and the shadow diverge
 
 ![dashboard](docs/dashboard.png)
 
+## What is enforced by code, what is measured, what depends on the agent
+
+| Control | How it works | Enforced by |
+|---|---|---|
+| Exchange filters (LOT_SIZE, PRICE_FILTER, NOTIONAL, precision) | Validated exactly like Binance; rejected with the real code and message | twin code, always |
+| Insufficient balance / margin, LIMIT_MAKER would take, stop would trigger | Rejected before the order exists | twin code, always |
+| Policy limits (allowlist, max notional, gross exposure, leverage, orders/min) | Counted into the report; blocks the order only with `policy.enforce: true` | measured by default, code when enforced |
+| Go-live gate | Thresholds in `rehearsal.yaml`; exit code 0/1; `GATE_PASS.json` with a 24 h TTL | code |
+| A session that never trades cannot pass | `min_writes_per_session` criterion | code |
+| Confirmation compliance | Share of writes restated (symbol, side, qty) in the assistant turn before the call, from the transcript | measured, not enforced |
+| The Rehearsal Agent may only change the strategy | No file or MCP tools in the coach step; threshold fingerprint before/after; proposals mentioning thresholds are refused | code |
+| "Never trade live without a fresh PASS" | Rule in `skills/dress-rehearsal/SKILL.md` | depends on the agent following the skill |
+| Shadow mirroring | Claude Code `PostToolUse` hook; never blocks or alters the live call | code (hook), only for Claude Code |
+
+A PASS means "passed these operational checks, on these recorded windows, with this schema". It is not a
+profit forecast, and it does not claim matching-engine fidelity.
+
 ## Fidelity: what is simulated, what is not
 
 | Simulated | Not simulated |
@@ -190,6 +220,30 @@ rehearsal demo    [--speed 10]
 
 Tests (no network): `.venv/bin/pytest`.
 
+## The Rehearsal Agent
+
+```
+rehearsal coach --strategy prompts/strategy_momentum_v1.md
+```
+
+One command runs the loop a careful builder would run by hand:
+
+1. **Rehearse** the strategy for three headless Claude Code sessions on the *dev* replay window.
+2. On FAIL, **diagnose**: the agent reads the report and the exact tool responses the trading agent
+   received (`{"code":-1013,"msg":"Filter failure: LOT_SIZE"}`, the policy violation, the order left open)
+   and names each root cause in the strategy text.
+3. **Propose a bounded correction**: it rewrites only the strategy prompt, saved as `<strategy>.v2.md`
+   with a unified diff. It has no file tools and no MCP access; the gate thresholds and policy limits are
+   fingerprinted before and after the loop and reported. A proposal that mentions changing them is refused.
+4. **Retest** v2 on the dev window.
+5. **Verify on a held-out window** recorded two hours later, with the same thresholds. That is the verdict.
+
+The result is `reports/<coach_id>/COACH.md`: a timeline table, the diagnosis in plain words with evidence,
+the corrections, every strategy version with its hash, and the reproduction command. A curated copy of a
+real run lives in [`evidence/`](evidence/).
+
+COACH_RESULTS_PLACEHOLDER
+
 ## What a real rehearsal looks like
 
 `prompts/strategy_deliberately_bad.md` (a plausible but flawed scalper: hard-coded sizes, 20x, "retry the
@@ -233,7 +287,7 @@ Flip to live:
 
 ## Track B evidence
 
-_Screenshots of the live orders placed through the rehearse → gate → flip → shadow flow go here._
+_Screenshots of the live orders placed through the rehearse → gate → flip → shadow flow go here (spot, futures, convert)._
 
 ## Roadmap
 

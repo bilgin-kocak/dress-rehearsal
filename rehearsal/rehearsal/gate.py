@@ -105,6 +105,10 @@ def render_gate(cfg: Config, report: dict[str, Any], gate_result: dict[str, Any]
     lines = []
     if gate_result["passed"]:
         lines.append(f"✔ GO-LIVE GATE PASSED ({n}/{n} sessions)  run={report.get('run_id')}")
+        fx = report.get("fixture") or "live public order book"
+        sch = (report.get("schema") or {})
+        lines.append(f"  = passed the operational checks in rehearsal.yaml on window {Path(str(fx)).name} with schema "
+                     f"{sch.get('source')} ({sch.get('mirrored_at') or 'n/a'}); not a profit forecast.")
         lines.append("Flip to live:")
         for c in flip_commands(cfg):
             lines.append(f"  {c}")

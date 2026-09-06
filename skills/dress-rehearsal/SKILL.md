@@ -31,14 +31,19 @@ are filled against the real public order book; rejections use the real Binance e
    user to authenticate `binance-mcp-server` once in Claude Code (`/mcp`) and run
    `rehearsal schema dump`; the twin then serves the real server's `tools/list` verbatim. Do not
    rehearse against the fallback schema without saying so.
-3. Run the rehearsal with the user's strategy prompt:
+3. Run the Rehearsal Agent loop with the user's strategy prompt:
    ```
-   rehearsal run --strategy <prompt.md> --sessions 3 --client claude-code --mode replay --fixture fixtures/replay/demo
+   rehearsal coach --strategy <prompt.md> --sessions 3 --dev-fixture fixtures/replay/demo --holdout-fixture fixtures/replay/holdout
    ```
-   (use `--mode live` to rehearse on the live public order book with paper money). Then read
-   `reports/<run_id>/report.md` and summarise in plain language: PASS or FAIL, the three most important
-   recommendations, P&L / max drawdown, rejections by code, policy violations, liquidations,
-   confirmation compliance.
+   It rehearses headlessly, and on FAIL it diagnoses the failure from the report and the exact tool
+   responses, proposes a corrected strategy (`<prompt>.v2.md`, reviewable diff in the coach directory),
+   retests it, and finally verifies the passing version on a **held-out** replay window with unchanged
+   thresholds. Read `reports/<coach_id>/COACH.md` and summarise in plain language: the verdict, each
+   root cause with its evidence, what changed in the strategy and why, and the held-out result.
+   (`rehearsal run` does a single rehearsal without corrections; `--mode live` rehearses on the live
+   public order book with paper money.)
+   If the agent's proposed correction changes the strategy's intent, sizes or risk in a way the user did
+   not ask for, say so and let the user edit `<prompt>.v2.md` before re-running.
 4. On PASS, show the exact flip commands the gate printed:
    ```
    claude mcp remove binance-mcp-server
@@ -50,7 +55,10 @@ are filled against the real public order book; rejections use the real Binance e
    one line immediately before calling the tool, even if the client auto-approves tools. Wait for the
    user's explicit yes when the client does not enforce approval itself.
 6. Never suggest disabling, weakening or bypassing the gate, the policy limits, or the confirmation
-   step. If a threshold seems wrong, explain how to change `rehearsal.yaml` and re-run the rehearsal.
+   step, and never "fix" a failing rehearsal by editing them. Corrections go into the strategy prompt
+   only; the coach fingerprints the thresholds before and after and reports if they changed. If a
+   threshold is genuinely wrong for the user's mandate, say so explicitly, let the user change
+   `rehearsal.yaml` themselves, and re-run the full loop including the held-out verification.
 
 ## Commands you will use
 
@@ -58,7 +66,9 @@ are filled against the real public order book; rejections use the real Binance e
 |---|---|
 | `rehearsal serve` | Start the twin (stdio MCP + dashboard on http://127.0.0.1:8765/) |
 | `rehearsal schema validate` | Zero-drift check of the twin's tools vs `schemas/tools.json` (and vs live with a token) |
-| `rehearsal run --strategy P --sessions N` | Headless rehearsal sessions → report → gate |
+| `rehearsal coach --strategy P` | Rehearse → diagnose → bounded fix → retest → verify on the held-out window |
+| `rehearsal run --strategy P --sessions N` | One rehearsal (no corrections) → report → gate |
+| `rehearsal doctor` | Environment and onboarding checks with the next command to run |
 | `rehearsal report` / `rehearsal gate` | Print the latest report / re-evaluate the gate (exit 0 = PASS) |
 | `rehearsal shadow install` | Mirror live calls into the twin via a Claude Code PostToolUse hook |
 | `rehearsal demo` | Replay-mode twin seeded with a deliberately bad run (FAIL) for a walkthrough |

@@ -12,3 +12,4 @@ rehearsal.yaml
 *.egg-info/
 .claude/settings.local.json
 reports/GATE_PASS.json
+!evidence/
