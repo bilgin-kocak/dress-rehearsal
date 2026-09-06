@@ -1,0 +1,18 @@
+{
+ "resources": [
+  {
+   "name": "portfolio-asset-analysis-workflow",
+   "uri": "resource://portfolio/asset-analysis-workflow",
+   "description": "Step-by-step read-only workflow for analyzing a user's portfolio holdings: fetch holdings + top assets by BTC valuation + per-asset token reports, compute concentration metrics locally, and synthesize a snapshot.",
+   "mimeType": "text/markdown",
+   "size": 2305,
+   "contents": [
+    {
+     "uri": "resource://portfolio/asset-analysis-workflow",
+     "mimeType": "text/markdown",
+     "text": "# Asset analysis — portfolio holdings review\n\nYou are analyzing a user's holdings. Follow this exact pattern. You do NOT have\nthe data yet — fetch it with the tools below, then compute everything locally.\n\n## Step 1 — Fetch holdings (read-only)\nCall `getMainAccountAsset` tool. It returns the user's main account holdings:\nper-asset quantity + BTC valuation (and a total). Do NOT copy raw rows into the\nfinal answer — you will aggregate them.\n\n## Step 2 — Pick top assets, fetch their reports\nFrom the holdings, rank assets by BTC valuation and take the top ones\n(cap at top-5 to limit fan-out). For each, call `getTokenAiReport` with\n`token=<asset symbol>` (default `product=\"spot\"`). The tool returns the nearest\navailable AI report; if a token has no report it returns `available=false` —\nnote \"report unavailable\" for that asset and continue; never fabricate.\n\n## Step 3 — Compute concentration LOCALLY (the server does not do this)\nFrom the BTC valuations returned in Step 2, compute:\n- per-asset BTC allocation %  = asset_btc_value / total_btc_value\n- largest-asset concentration % = max allocation\n- top-3 concentration %        = sum of the 3 largest allocations\n- stablecoin ratio %           = sum of allocations for USDT/USDC/FDUSD/DAI/TUSD/BUSD\n\n## Step 4 — Synthesize (use this template)\n```text\nPortfolio snapshot\n- Total tracked assets: N\n- Largest allocation: <ASSET> (<pct>%)\n- Top-3 concentration: <pct>%\n- Stablecoin ratio: <pct>%\n\nTop holdings\n- <ASSET>: <btc_value> BTC value, <pct>%\n- ...\n\nReport takeaways\n- <ASSET>: <1-2 line takeaway from its token report>\n- ...\n\nRisk flags\n- <e.g. \"Top-3 concentration is high (>80%)\">\n- <e.g. \"BTC overweight relative to the rest of the portfolio\">\n- <e.g. \"Idle stablecoin ratio is high — could earn yield\">\n```\n\n## Constraints\n- READ-ONLY. Do not place/modify/cancel orders or move funds. If the user wants\n  to act on a finding, hand off to the execution/CONFIRM flow — out of scope here.\n- Compute all ratios yourself from the returned BTC valuations. Present\n  aggregated, decision-useful views — never dump raw per-row payloads.\n- If `getMainAccountAsset` errors or returns empty, say the holdings are unavailable and\n  stop; do not invent numbers.\n- Keep report takeaways to 1-2 lines each; the reports can be long."
+    }
+   ]
+  }
+ ]
+}

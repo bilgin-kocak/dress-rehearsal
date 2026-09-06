@@ -132,7 +132,8 @@ def discover_token(server_name: str) -> tuple[str | None, str]:
 
 
 # ---------------------------------------------------------------------------- MCP client
-async def fetch_tools(url: str, token: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+async def fetch_tools(url: str, token: str, with_catalog: bool = True) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """tools/list (all pages) + hidden catalog (tool_search per category) + resources + init info."""
     import httpx2  # bundled with mcp>=2
     from mcp import Client
     from mcp.client.streamable_http import streamable_http_client
@@ -140,14 +141,64 @@ async def fetch_tools(url: str, token: str) -> tuple[list[dict[str, Any]], dict[
     headers = {"Authorization": f"Bearer {token}"}
     async with httpx2.AsyncClient(headers=headers, timeout=60.0, follow_redirects=True) as http:
         async with Client(streamable_http_client(url, http_client=http)) as client:
-            res = await client.list_tools()
-            tools = [t.model_dump(by_alias=True, exclude_none=True) for t in res.tools]
-            init = {}
+            tools: list[dict[str, Any]] = []
+            cursor = None
+            pages = 0
+            while True:
+                res = await client.list_tools(cursor=cursor)
+                tools += [t.model_dump(by_alias=True, exclude_none=True) for t in res.tools]
+                pages += 1
+                cursor = getattr(res, "next_cursor", None)
+                if not cursor or pages > 50:
+                    break
+            init: dict[str, Any] = {"pages": pages}
             try:
-                init = {"server_info": client.server_info.model_dump(exclude_none=True) if getattr(client, "server_info", None) else None,
-                        "instructions": getattr(client, "instructions", None)}
+                si = getattr(client, "server_info", None)
+                init["server_info"] = si.model_dump(exclude_none=True) if si else None
+                init["instructions"] = getattr(client, "instructions", None)
             except Exception:
                 pass
+            init["catalog"] = {}
+            if with_catalog:
+                search = next((t for t in tools if t["name"] == "tool_search"), None)
+                cats = ((search or {}).get("inputSchema") or {}).get("properties", {}).get("category", {}).get("enum", []) if search else []
+                catalog: dict[str, dict[str, Any]] = {}
+                for cat in cats:
+                    cur = None
+                    for _ in range(50):
+                        args = {"category": cat}
+                        if cur:
+                            args["cursor"] = cur
+                        try:
+                            r = await client.call_tool("tool_search", args)
+                        except Exception as e:
+                            log.warning("tool_search %s failed: %s", cat, e)
+                            break
+                        payload = r.structured_content or {}
+                        if not payload and r.content:
+                            try:
+                                payload = json.loads(r.content[0].text)  # type: ignore[attr-defined]
+                            except Exception:
+                                payload = {}
+                        for t in payload.get("tools", []):
+                            catalog.setdefault(t["name"], dict(t, _category=cat))
+                        cur = payload.get("nextCursor")
+                        if not cur:
+                            break
+                init["catalog"] = catalog
+            init["resources"] = []
+            try:
+                rl = await client.list_resources()
+                for r in rl.resources:
+                    entry = r.model_dump(by_alias=True, exclude_none=True)
+                    try:
+                        rr = await client.read_resource(r.uri)
+                        entry["contents"] = [c.model_dump(by_alias=True, exclude_none=True) for c in rr.contents]
+                    except Exception as e:
+                        entry["read_error"] = str(e)
+                    init["resources"].append(entry)
+            except Exception as e:
+                log.info("resources/list not available: %s", e)
             return tools, init
 
 
@@ -206,12 +257,24 @@ async def dump_schema(cfg: Config, out: Path, samples: bool = True, token: str |
         print(f"tools/list failed: {e}\nIf this is a 401, re-authenticate in Claude Code (/mcp) and retry.")
         return 1
     out.parent.mkdir(parents=True, exist_ok=True)
+    catalog = init.pop("catalog", {}) or {}
+    resources = init.pop("resources", []) or []
     payload = {"_meta": {"source": "mirrored", "dumped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "endpoint": cfg.live_url,
-                         "server": server, "token_source": where, "init": init}, "tools": tools}
+                         "server": server, "token_source": where, "init": init, "exposed": len(tools), "catalog": len(catalog)}, "tools": tools}
     out.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
-    print(f"wrote {out} with {len(tools)} tools:")
+    print(f"wrote {out} with {len(tools)} exposed tools ({init.get('pages')} page(s)):")
     for t in tools:
         print(f"  - {t['name']}")
+    if catalog:
+        cpath = out.parent / "catalog.json"
+        cpath.write_text(json.dumps({"_meta": {"dumped_at": payload["_meta"]["dumped_at"], "note": "hidden catalog reachable via tool_search/tool_execute"},
+                                     "tools": list(catalog.values())}, indent=1, ensure_ascii=False) + "\n")
+        hidden = [n for n in catalog if n not in {t["name"] for t in tools}]
+        print(f"wrote {cpath}: {len(catalog)} catalog tools ({len(hidden)} hidden, reachable only via tool_execute)")
+    if resources:
+        rpath = out.parent / "resources.json"
+        rpath.write_text(json.dumps({"resources": resources}, indent=1, ensure_ascii=False) + "\n")
+        print(f"wrote {rpath}: {len(resources)} resource(s)")
     if samples:
         sdir = out.parent / "samples"
         print(f"capturing read-only samples into {sdir}/ ...")
@@ -225,10 +288,6 @@ async def dump_schema(cfg: Config, out: Path, samples: bool = True, token: str |
         print(f"\n{len(cat.unmapped)} tool(s) have no twin handler (add them to schemas/tool_map.yaml):")
         for n in cat.unmapped:
             print(f"  - {n}")
-    fb = ToolCatalog(cfg.model_copy(update={"schema_": cfg.schema_.model_copy(update={"tools_file": "/nonexistent"})}))
-    d = schema_diff(tools, [t.raw for t in fb.list_for_mcp()])
-    print(f"\nreal vs fallback: {d['common']} common, {len(d['only_in_a'])} only real, {len(d['only_in_b'])} only fallback, "
-          f"{len(d['schema_mismatch'])} schema mismatches")
     return 0
 
 
@@ -253,7 +312,7 @@ async def validate_schema(cfg: Config, live_url: str | None = None, token: str |
             print("no token for live comparison; skipping (authenticate in Claude Code first)")
             return rc or 2
         try:
-            real, _ = await fetch_tools(url, tok)
+            real, _ = await fetch_tools(url, tok, with_catalog=False)
         except Exception as e:
             print(f"live tools/list failed: {e}")
             return 1
@@ -263,5 +322,9 @@ async def validate_schema(cfg: Config, live_url: str | None = None, token: str |
         if not d["identical"]:
             rc = 1
     if cat.unmapped:
-        print(f"unmapped tools (served but not simulated): {cat.unmapped}")
+        print(f"unmapped exposed tools (served but not simulated): {cat.unmapped}")
+    if cat.catalog:
+        hidden = [n for n in cat.catalog if n not in cat.tools]
+        unsim = [n for n in hidden if cat.resolve(n) is None or cat.resolve(n).handler in ("unsupported",)]
+        print(f"hidden catalog: {len(hidden)} tools reachable via tool_execute; {len(hidden) - len(unsim)} simulated, {len(unsim)} return TWIN_UNSUPPORTED")
     return rc

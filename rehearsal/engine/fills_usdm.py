@@ -47,7 +47,31 @@ class UsdmEngine:
         return B.levels(d["bids"]), B.levels(d["asks"])
 
     def settings(self, symbol: str) -> dict[str, Any]:
-        return self.ledger.symbol_settings(symbol, self.cfg.default_leverage)
+        st = self.ledger.symbol_settings(symbol, self.cfg.default_leverage)
+        if st.get("margin_type") in (None, "", "ISOLATED") and not self._settings_row_exists(symbol):
+            st["margin_type"] = self.cfg.default_margin_type
+        return st
+
+    def _settings_row_exists(self, symbol: str) -> bool:
+        return self.ledger._row("SELECT 1 FROM symbol_settings WHERE market='usdm' AND symbol=?", (symbol,)) is not None
+
+    def is_cross(self, symbol: str) -> bool:
+        return self.settings(symbol)["margin_type"] == "CROSSED"
+
+    def cross_margin_balance(self) -> tuple[Decimal, Decimal]:
+        """(margin balance, maintenance margin) across all CROSSED positions: wallet + their margin + their uPnL."""
+        free, locked = self.wallet()
+        bal = free + locked
+        maint = ZERO
+        mmr = D(str(self.cfg.maintenance_rate))
+        for p in self.ledger.positions("usdm"):
+            if not self.is_cross(p["symbol"]):
+                continue
+            amt = dec(p["position_amt"])
+            mark = self.feed.mark_price(p["symbol"]) or dec(p["entry_price"])
+            bal += dec(p["isolated_margin"]) + (mark - dec(p["entry_price"])) * amt
+            maint += abs(amt) * mark * mmr
+        return bal, maint
 
     def mark(self, symbol: str) -> Decimal:
         m = self.feed.mark_price(symbol)
@@ -73,6 +97,10 @@ class UsdmEngine:
             return ZERO
         mmr = D(str(self.cfg.maintenance_rate))
         q = abs(amt)
+        if self.is_cross(symbol):
+            # Cross: the whole wallet backs the position (other cross positions' uPnL is ignored in this estimate).
+            free, locked = self.wallet()
+            margin = free + locked + sum((dec(p["isolated_margin"]) for p in self.ledger.positions("usdm") if self.is_cross(p["symbol"])), ZERO)
         if amt > ZERO:
             lp = (entry * q - margin) / (q * (1 - mmr))
         else:
@@ -89,9 +117,10 @@ class UsdmEngine:
         if dec(pos["position_amt"]) != ZERO:
             # Binance allows changing leverage with a position only if margin permits; keep simple: allow.
             pass
-        self.ledger.set_symbol_settings(symbol, leverage=lev, default_leverage=self.cfg.default_leverage)
+        cur = self.settings(symbol)
+        self.ledger.set_symbol_settings(symbol, leverage=lev, margin_type=cur["margin_type"], default_leverage=self.cfg.default_leverage)
         self.ledger.add_event("leverage_changed", symbol, {"leverage": lev})
-        max_notional = "1000000" if lev >= 50 else "5000000" if lev >= 20 else "20000000"
+        max_notional = "1000000" if lev >= 50 else "5000000" if lev > 20 else "100000000"
         return {"symbol": symbol, "leverage": lev, "maxNotionalValue": max_notional}
 
     def change_margin_type(self, symbol: str, margin_type: Any) -> dict[str, Any]:
@@ -108,9 +137,8 @@ class UsdmEngine:
             raise E.err(E.FUT_MARGIN_TYPE_POSITION)
         if self.ledger.open_orders("usdm", symbol):
             raise E.err(E.FUT_MARGIN_TYPE_CANNOT_CHANGE)
-        if mt == "CROSSED":
-            raise E.err(E.TWIN_UNSUPPORTED, "CROSSED margin (twin supports ISOLATED only)")
         self.ledger.set_symbol_settings(symbol, margin_type=mt, default_leverage=self.cfg.default_leverage)
+        self.ledger.add_event("margin_type_changed", symbol, {"marginType": mt})
         return {"code": 200, "msg": "success"}
 
     # ------------------------------------------------------------------ order entry
@@ -453,6 +481,9 @@ class UsdmEngine:
         amt = dec(pos["position_amt"])
         if amt == ZERO:
             return
+        if self.is_cross(symbol):
+            self._check_cross_liquidation(ts)
+            return
         margin = dec(pos["isolated_margin"])
         upnl = (mark - dec(pos["entry_price"])) * amt
         maint = abs(amt) * mark * D(str(self.cfg.maintenance_rate))
@@ -477,6 +508,40 @@ class UsdmEngine:
                                                           "entry_price": pos["entry_price"], "isolated_margin": str(margin),
                                                           "unrealized": str(upnl), "lost": str(margin), "leverage": self.settings(symbol)["leverage"]})
         self.e.after_write("usdm", symbol)
+
+    def _check_cross_liquidation(self, ts: int) -> None:
+        """Cross margin: when wallet + all cross positions' margin + uPnL <= their maintenance margin, everything goes."""
+        bal, maint = self.cross_margin_balance()
+        if maint == ZERO or bal > maint:
+            return
+        positions = [p for p in self.ledger.positions("usdm") if self.is_cross(p["symbol"])]
+        with self.e.lock:
+            for p in positions:
+                for row in self.ledger.open_orders("usdm", p["symbol"]):
+                    self._finish(row, "EXPIRED")
+            free, locked = self.wallet()
+            lost_wallet = free + locked
+            total_margin = sum((dec(p["isolated_margin"]) for p in positions), ZERO)
+            for p in positions:
+                amt = dec(p["position_amt"])
+                mark = self.feed.mark_price(p["symbol"]) or dec(p["entry_price"])
+                upnl = (mark - dec(p["entry_price"])) * amt
+                self.ledger.upsert_position(p["symbol"], ZERO, ZERO, ZERO)
+                self.ledger.add_income(p["symbol"], "REALIZED_PNL", upnl, info="LIQUIDATION")
+                self.ledger.add_fill(market="usdm", symbol=p["symbol"], order_id=0, side="SELL" if amt > ZERO else "BUY", price=mark,
+                                     qty=abs(amt), quote_qty=abs(amt) * mark, commission=ZERO, commission_asset="USDT", is_maker=0,
+                                     realized_pnl=upnl, slippage_bps=None, source="liquidation")
+                self.ledger.add_event("LIQUIDATION", p["symbol"], {"mark": str(mark), "position_amt": str(amt), "entry_price": p["entry_price"],
+                                                                   "margin_type": "CROSSED", "unrealized": str(upnl),
+                                                                   "lost": str(dec(p["isolated_margin"])), "leverage": self.settings(p["symbol"])["leverage"]})
+            # The whole cross wallet is consumed (margin balance <= maintenance): zero it out.
+            if free > ZERO:
+                self.ledger.debit("usdm", "USDT", free, "LIQUIDATION", "cross")
+            if locked > ZERO:
+                self.ledger.consume_locked("usdm", "USDT", locked, "LIQUIDATION", "cross")
+            self.ledger.add_income(None, "INSURANCE_CLEAR", -(lost_wallet + total_margin), info="CROSS_LIQUIDATION")
+        for p in positions:
+            self.e.after_write("usdm", p["symbol"])
 
     # ------------------------------------------------------------------ views (Binance shapes)
     def order_view(self, row: dict[str, Any], sym: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -508,25 +573,37 @@ class UsdmEngine:
             mark = self.feed.mark_price(r["symbol"]) or ZERO
             st = self.settings(r["symbol"])
             upnl = (mark - dec(r["entry_price"])) * amt
+            cross = st["margin_type"] == "CROSSED"
+            iso = ZERO if cross else dec(r["isolated_margin"])
             out.append({
-                "symbol": r["symbol"], "positionAmt": dstr(amt, qp), "entryPrice": dstr(r["entry_price"], pp),
-                "breakEvenPrice": dstr(r["entry_price"], pp), "markPrice": dstr(mark, 8),
-                "unRealizedProfit": dstr(upnl, 8), "liquidationPrice": dstr(self.liquidation_price(r["symbol"]), pp),
-                "leverage": str(st["leverage"]), "maxNotionalValue": "20000000", "marginType": st["margin_type"].lower(),
-                "isolatedMargin": dstr(dec(r["isolated_margin"]), 8), "isAutoAddMargin": "false", "positionSide": "BOTH",
-                "notional": dstr(amt * mark, 8), "isolatedWallet": dstr(dec(r["isolated_margin"]), 8),
-                "updateTime": r.get("updated_at") or 0, "bidNotional": "0", "askNotional": "0",
+                "symbol": r["symbol"], "positionAmt": dstr(amt, qp), "entryPrice": dstr(r["entry_price"], pp if amt != ZERO else 1),
+                "breakEvenPrice": dstr(r["entry_price"], pp if amt != ZERO else 1), "markPrice": dstr(mark if amt != ZERO else ZERO, 8),
+                "unRealizedProfit": dstr(upnl, 8), "liquidationPrice": dstr(self.liquidation_price(r["symbol"]), pp) if amt != ZERO else "0",
+                "leverage": str(st["leverage"]), "maxNotionalValue": "100000000", "marginType": "cross" if cross else "isolated",
+                "isolatedMargin": dstr(iso, 8), "isAutoAddMargin": "false", "positionSide": "BOTH",
+                "notional": dstr(amt * mark, 8) if amt != ZERO else "0", "isolatedWallet": dstr(iso, 8) if not cross else "0",
+                "updateTime": r.get("updated_at") or 0, "isolated": not cross, "adlQuantile": 0,
             })
         return out
 
     def balance_view(self) -> list[dict[str, Any]]:
         free, locked = self.wallet()
-        upnl = sum((self.unrealized(p["symbol"]) for p in self.ledger.positions("usdm")), ZERO)
-        return [{
-            "accountAlias": "twinTwin", "asset": "USDT", "balance": dstr(free + locked), "crossWalletBalance": dstr(free + locked),
-            "crossUnPnl": "0.00000000", "availableBalance": dstr(free), "maxWithdrawAmount": dstr(free),
-            "marginAvailable": True, "updateTime": self.e.now(), "_isolatedUnPnl": dstr(upnl),
-        }]
+        positions = self.ledger.positions("usdm")
+        cross_margin = sum((dec(p["isolated_margin"]) for p in positions if self.is_cross(p["symbol"])), ZERO)
+        cross_upnl = sum((self.unrealized(p["symbol"]) for p in positions if self.is_cross(p["symbol"])), ZERO)
+        wallet = free + locked + cross_margin
+        now = self.e.now()
+        rows = []
+        for asset in ("USDT", "USDC", "BNB", "BFUSD", "FDUSD", "BTC", "ETH"):
+            if asset == "USDT":
+                rows.append({"accountAlias": "uXtwin", "asset": asset, "balance": dstr(wallet), "crossWalletBalance": dstr(wallet),
+                             "crossUnPnl": dstr(cross_upnl), "availableBalance": dstr(free), "maxWithdrawAmount": dstr(max(free, ZERO)),
+                             "marginAvailable": True, "updateTime": now})
+            else:
+                rows.append({"accountAlias": "uXtwin", "asset": asset, "balance": "0.00000000", "crossWalletBalance": "0.00000000",
+                             "crossUnPnl": "0.00000000", "availableBalance": "0.00000000", "maxWithdrawAmount": "0.00000000",
+                             "marginAvailable": True, "updateTime": 0})
+        return rows
 
     def account_view(self) -> dict[str, Any]:
         free, locked = self.wallet()

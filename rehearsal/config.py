@@ -16,8 +16,9 @@ class ServerConfig(BaseModel):
     http_port: int = 8765
     bearer_token: str | None = None
     mark_twin_descriptions: bool = False
-    # How tool errors are returned. "binance_json": content is the Binance error JSON with isError=true.
-    error_style: Literal["binance_json"] = "binance_json"
+    # How tool errors are returned. "jsonrpc" (real server, observed 2026-09-06): a JSON-RPC error -32603 whose
+    # message is the raw Binance JSON. "result": a CallToolResult with isError=true carrying the same JSON.
+    error_style: Literal["jsonrpc", "result"] = "jsonrpc"
 
 
 class SchemaConfig(BaseModel):
@@ -55,7 +56,9 @@ class LatencyConfig(BaseModel):
 
 
 class UsdmConfig(BaseModel):
-    default_leverage: int = 5
+    # A fresh Agentic sub-account reports leverage 20 and marginType cross (observed 2026-09-06).
+    default_leverage: int = 20
+    default_margin_type: Literal["CROSSED", "ISOLATED"] = "CROSSED"
     maintenance_rate: float = 0.004   # Binance BTCUSDT/ETHUSDT bracket-1 maintenance margin rate
     liquidation_fee: float = 0.0
     max_leverage: int = 125

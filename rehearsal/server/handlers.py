@@ -72,8 +72,7 @@ def tool_search(ctx: ToolContext, args: dict[str, Any]) -> Any:
     if not category:
         raise E.mandatory("category")
     tools = ctx.catalog.search(str(category), args.get("query"))
-    return {"category": category, "count": len(tools), "tools": tools, "nextCursor": None,
-            "hint": "Run any of these with tool_execute(toolName, arguments)."}
+    return {"tools": tools, "nextCursor": None}
 
 
 @handler("tool_execute")
@@ -86,6 +85,10 @@ def tool_execute(ctx: ToolContext, args: dict[str, Any]) -> Any:
         raise E.err(E.BAD_PARAM, "arguments")
     if ctx.dispatch is None:
         raise E.err(E.TWIN_UNSUPPORTED, "tool_execute")
+    if not ctx.catalog.is_known(str(name)):
+        # Verbatim message of the real server for an unknown toolName.
+        raise E.ToolNotFound(f"Tool not found: '{name}'. Call tool_search with a category from its inputSchema.enum to discover "
+                             "available toolName, or call tools/list to see always-exposed tools.")
     return ctx.dispatch(ctx, str(name), inner)
 
 
@@ -594,3 +597,7 @@ def margin_account(ctx: ToolContext, args: dict[str, Any]) -> Any:
 @handler("sub_account_main_assets")
 def sub_account_main_assets(ctx: ToolContext, args: dict[str, Any]) -> Any:
     return {"balances": [], "_twin_note": "no read-only main-account view granted to the twin"}
+
+
+# Long-tail handlers (kline variants, COIN-M / margin shapes, wallet extras) register themselves on import.
+from rehearsal.server import handlers_extra  # noqa: E402,F401

@@ -34,8 +34,8 @@ services.
 
 | Path | Responsibility |
 |---|---|
-| `rehearsal/server/catalog.py` | Loads `schemas/tools.json` (mirrored from the real server) or `schemas/fallback_tools.json`, plus `schemas/tool_map.yaml`. Resolves `spot.newOrder` / `spot_newOrder` / `tool_execute(toolName=…)` to one handler. |
-| `rehearsal/server/mcp_server.py` | MCP low-level `Server` (SDK v2): `tools/list` returns the catalog **verbatim**; `tools/call` dispatches, applies the confirmation mode, logs every call (latency, status, error code, mid at arrival). Same `execute()` path is used by MCP, the shadow receiver, `/api/call` and the demo seed. |
+| `rehearsal/server/catalog.py` | Loads `schemas/tools.json` (81 exposed tools, mirrored) + `schemas/catalog.json` (316-tool hidden catalog served by `tool_search` and reachable via `tool_execute`) + `schemas/resources.json`, or `schemas/fallback_tools.json`, plus `schemas/tool_map.yaml`. Resolves `spot.newOrder` / `spot_newOrder` / `tool_execute(toolName=…)` to one handler. |
+| `rehearsal/server/mcp_server.py` | MCP low-level `Server` (SDK v2): `initialize` mirrors the real serverInfo + instructions; `tools/list` returns the catalog **verbatim**; `tools/call` dispatches, applies the confirmation mode, logs every call (latency, status, error code, mid at arrival) and returns Binance errors the way the real server does (JSON-RPC error -32603 with the raw Binance JSON as message). Same `execute()` path is used by MCP, the shadow receiver, `/api/call` and the demo seed. |
 | `rehearsal/server/handlers.py` | One function per tool category: market data (feed passthrough / replay snapshots), account views, trade, transfer, convert, meta (`tool_search`, `tool_execute`). |
 | `rehearsal/server/errors.py` | Binance error table (`-1013 Filter failure: LOT_SIZE`, `-2010`, `-2019`, `-4164`, …) and the twin-only `-9001 TWIN_UNSUPPORTED`. |
 | `rehearsal/server/confirm.py` | `none` / `elicitation` (MCP `InputRequiredResult`) / `echo` (confirm token) modes. |
@@ -43,7 +43,8 @@ services.
 | `rehearsal/market/recorder.py` | Records the same streams to a fixture (`events.jsonl`, exchangeInfo, REST snapshots). |
 | `rehearsal/engine/filters.py` | Exact Binance validation: PRICE_FILTER, LOT_SIZE, MARKET_LOT_SIZE, NOTIONAL/MIN_NOTIONAL, PERCENT_PRICE(_BY_SIDE), precision (-1111), mandatory params (-1102). No auto-rounding: a rejection is the product. |
 | `rehearsal/engine/fills_spot.py` | MARKET (walks ≤100 levels, partial → EXPIRED), LIMIT GTC/IOC/FOK (marketable → taker; resting → fills when aggTrades print through the price with `queue_factor`), LIMIT_MAKER, STOP_LOSS(_LIMIT)/TAKE_PROFIT(_LIMIT). Commission in the received asset, like Binance. |
-| `rehearsal/engine/fills_usdm.py` | USDⓈ-M isolated margin: open/increase/reduce/close with realized PnL, leverage per symbol, mark-price uPnL, liquidation price, liquidation on `margin + uPnL ≤ maintenance` (isolated margin forfeited), funding at 00/08/16 UTC on the virtual clock, STOP/TAKE_PROFIT(_MARKET) with CONTRACT/MARK price triggers. |
+| `rehearsal/engine/fills_usdm.py` | USDⓈ-M cross (default: 20x cross, like a fresh Agentic sub-account) and isolated margin: open/increase/reduce/close with realized PnL, leverage per symbol, mark-price uPnL, liquidation price, liquidation on `margin balance ≤ maintenance` (isolated: that position's margin; cross: the whole wallet and every cross position), funding at 00/08/16 UTC on the virtual clock, STOP/TAKE_PROFIT(_MARKET) with CONTRACT/MARK price triggers. |
+| `rehearsal/server/handlers_extra.py` | The long tail of the real catalog: mark/index/premium/continuous kline variants (fapi + dapi passthrough), COIN-M and margin read shapes, wallet extras, futures account configuration. |
 | `rehearsal/engine/ledger.py` | SQLite tables: wallets, balance_changes (every change has a reason), orders, fills, positions, symbol_settings, income, transfers, tool_calls, sessions, events, equity_snapshots, shadow_events, convert_quotes. Decimals stored as TEXT (exact). |
 | `rehearsal/engine/engine.py` | Facade: equity (spot value + futures wallet + uPnL), transfers, convert (quote against the book with a 10 bps spread), sessions, feed callbacks. |
 | `rehearsal/policy.py` | Counts (or, with `enforce: true`, blocks) violations: allowlist, max notional, max gross exposure, max leverage, orders/min. |
@@ -78,6 +79,15 @@ until the virtual clock passes `now + latency`, so fills are deterministic (`fix
 - Not simulated: matching-engine priority/self-trade prevention, cross margin, hedge mode, OCO, margin
   trading, COIN-M, trailing stops, market impact of your own orders, Binance's insurance-fund/ADL details,
   gateway latency of the hosted MCP.
+
+## What `rehearsal schema dump` produces
+
+| File | Content |
+|---|---|
+| `schemas/tools.json` | The 81 always-exposed tools, verbatim (name, description, inputSchema), plus `_meta.init` (serverInfo, instructions, page count). |
+| `schemas/catalog.json` | The 316 tools returned by `tool_search` across all categories, each tagged with its category. Served back by the twin's `tool_search`; any of them runs through `tool_execute`. |
+| `schemas/resources.json` | The server's MCP resources with their contents (today: the portfolio analysis workflow). |
+| `schemas/samples/*.json` | One real response per read tool, and the exact error for a rejected write. |
 
 ## Why a fallback schema exists
 

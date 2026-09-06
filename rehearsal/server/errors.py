@@ -101,6 +101,10 @@ CONVERT_QUOTE_EXPIRED = (-4058, "Quote expired.")
 CONVERT_BAD_PAIR = (-1121, "Invalid symbol.")
 
 
+class ToolNotFound(Exception):
+    """tool_execute of a name the real server does not have: surfaced verbatim as the JSON-RPC error message."""
+
+
 def err(pair: tuple[int, str], *fmt: Any) -> BinanceError:
     code, msg = pair
     if fmt:

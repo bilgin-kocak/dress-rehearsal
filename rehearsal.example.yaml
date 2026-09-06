@@ -7,6 +7,7 @@ server:
   http_port: 8765
   bearer_token: null          # optional static bearer for /mcp
   mark_twin_descriptions: false
+  error_style: jsonrpc        # jsonrpc (real server) | result
 
 schema:
   tools_file: schemas/tools.json            # dumped from the REAL server with `rehearsal schema dump`
@@ -31,7 +32,7 @@ engine:
   latency: {mean_ms: 80, sd_ms: 30, fixed_ms: null}   # fixed_ms makes replay deterministic
   queue_factor: 1.0           # resting limit fills need this × qty traded through the price
   market_insufficient_depth: partial   # partial | reject
-  usdm: {default_leverage: 5, maintenance_rate: 0.004, liquidation_fee: 0.0, max_leverage: 125}
+  usdm: {default_leverage: 20, default_margin_type: CROSSED, maintenance_rate: 0.004, liquidation_fee: 0.0, max_leverage: 125}  # fresh sub-account defaults
 
 policy:                       # counted in the report; blocks only when enforce: true
   enforce: false

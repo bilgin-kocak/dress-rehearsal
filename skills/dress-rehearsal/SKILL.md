@@ -12,7 +12,7 @@ metadata:
 Same agent. Same prompt. Change one URL.
 
 The twin is a local MCP server that mirrors `https://agent.binance.com/mcp/agentic` tool-for-tool
-(`spot.newOrder`, `spot.depth`, `futures_usds.newOrder`, `tool_search`, `tool_execute`, ...). Orders
+(`spot.newOrder`, `spot.depth`, `futures_usds.newOrder`, `futures_usds.changeInitialLeverage`, `tool_search`, `tool_execute`, ...). Orders
 are filled against the real public order book; rejections use the real Binance error codes
 (`{"code": -1013, "msg": "Filter failure: LOT_SIZE"}`). Nothing touches the live sub-account.
 

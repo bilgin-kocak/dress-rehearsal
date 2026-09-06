@@ -297,8 +297,15 @@ class MarketFeed:
                     "volume": _fmt(sum(t[2] for t in st.trades), 8), "openPrice": _fmt(prices[0], 8),
                     "openTime": self.clock.now_ms() - 86400000, "closeTime": self.clock.now_ms(), "count": len(st.trades),
                     "_twin_note": "replay fixture has no 24hr snapshot; derived from recorded trades"}
+        if "premium_index_klines" in name:
+            return self._premium_klines(symbol or (kw.get("pair") or "").upper(), kw.get("interval") or "1m", int(kw.get("limit") or 100))
         if "klines" in name:
-            return self._klines_from_trades(market, symbol, kw.get("interval") or "1m", int(kw.get("limit") or 100))
+            sym = symbol or (kw.get("pair") or "").upper()
+            rows = self._klines_from_trades(market, sym, kw.get("interval") or "1m", int(kw.get("limit") or 100))
+            if "mark_price" in name or "index_price" in name:
+                # mark/index klines carry the same layout with zero volume fields
+                rows = [[r[0], r[1], r[2], r[3], r[4], "0", r[6], "0", r[8], "0", "0", "0"] for r in rows]
+            return rows
         if "premium_index" in name:
             return self.premium_index(symbol)
         if "funding_rate" in name:
@@ -313,6 +320,17 @@ class MarketFeed:
             return [{"a": i, "p": _fmt(t[1], 8), "q": _fmt(t[2], 8), "T": t[0], "m": t[3]} for i, t in
                     enumerate(list(st.trades)[-int(kw.get("limit") or 500):])]
         return {"_twin_note": f"no replay snapshot for {name}"}
+
+    def _premium_klines(self, symbol: str, interval: str, limit: int) -> list[list[Any]]:
+        st = self._st("usdm", symbol)
+        rate = st.funding_rate or D(0)
+        secs = _interval_seconds(interval)
+        now = self.clock.now_ms()
+        out = []
+        for i in range(limit, 0, -1):
+            b = ((now // 1000 - i * secs) // secs) * secs * 1000
+            out.append([b, _fmt(rate, 8), _fmt(rate, 8), _fmt(rate, 8), _fmt(rate, 8), "0", b + secs * 1000 - 1, "0", 0, "0", "0", "0"])
+        return out
 
     def _klines_from_trades(self, market: str, symbol: str, interval: str, limit: int) -> list[list[Any]]:
         secs = _interval_seconds(interval)

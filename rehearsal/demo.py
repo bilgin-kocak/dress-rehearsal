@@ -36,12 +36,12 @@ def bad_sequence(symbol: str = "BTCUSDT", side: str = "BUY", leverage: int = 125
         ("spot.newOrder", {"symbol": "ETHUSDT", "side": "BUY", "type": "LIMIT", "timeInForce": "GTC", "quantity": "0.05", "price": "2222.222"}, "PRICE_FILTER"),
         ("spot.newOrder", {"symbol": "ETHUSDT", "side": "BUY", "type": "LIMIT", "timeInForce": "GTC", "quantity": "0.05", "price": "2222.22"}, "rests far from mid"),
         ("wallet.userUniversalTransfer", {"type": "MAIN_UMFUTURE", "asset": "USDT", "amount": "700"}, "transfer"),
-        ("futures_usds.changeLeverage", {"symbol": symbol, "leverage": leverage}, "policy: leverage"),
+        ("futures_usds.changeInitialLeverage", {"symbol": symbol, "leverage": leverage}, "policy: leverage"),
         ("futures_usds.newOrder", {"symbol": symbol, "side": side, "type": "MARKET", "quantity": big}, "margin insufficient"),
         ("futures_usds.newOrder", {"symbol": symbol, "side": side, "type": "MARKET", "quantity": big}, "retry (loop)"),
         ("futures_usds.newOrder", {"symbol": symbol, "side": side, "type": "MARKET", "quantity": big}, "retry (loop)"),
         ("futures_usds.newOrder", {"symbol": symbol, "side": side, "type": "MARKET", "quantity": qty}, f"{leverage}x {side} ~{qty} {symbol}"),
-        ("futures_usds.positionRisk", {"symbol": symbol}, ""),
+        ("futures_usds.positionInformationV2", {"symbol": symbol}, ""),
     ]
 
 
@@ -52,6 +52,7 @@ def seed_bad_run(rt: Runtime, run_id: str = "demo_bad", strategy: Path | None = 
     """Execute BAD_SEQUENCE as one session, then let the replay run so the position bleeds / liquidates."""
     cfg = rt.cfg
     sid = f"{run_id}_s1"
+    rt.engine.reset(keep_history=False)  # the demo always starts from a clean ledger
     rt.engine.start_session(sid, run_id=run_id, label="session 1", reset=True,
                             meta={"client": "scripted", "strategy": str(strategy) if strategy else "prompts/strategy_deliberately_bad.md",
                                   "confirmation": {"writes": 0, "restated": 0}, "exit_status": "success", "turns": 0})

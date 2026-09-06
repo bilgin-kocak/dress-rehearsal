@@ -1,20 +1,18 @@
-# How write confirmation works on the real server (Day-0 findings)
+# How the real server behaves (verified 2026-09-06 against agent.binance.com)
 
-Sources: Binance MCP docs (developers.binance.com/en/docs/agent-native/mcp-server/agentic, synced
-2026-08-17), TechCrunch 2026-08-20, and captures published by other Agent OS clients (2026-09-03..05).
+Verified with `rehearsal schema dump` / `schema validate --live-url` after OAuth via Claude Code. Earlier
+guesses from docs and third-party captures are replaced by what the wire actually showed.
 
 | Question | Answer | Twin setting |
 |---|---|---|
-| Does the server use MCP **elicitation** before executing a write? | No evidence of it. Docs: "The agent restates the order — symbol, side, type, amount — and waits for your yes before sending it." Users can also choose in the Binance UI between per-order approval and autonomous execution. | `schema.confirm_mode: none` (default) |
-| Do tool descriptions instruct the model to restate and wait? | Yes — confirmation is instruction-based (server instructions + tool descriptions) plus the client's own tool-approval prompt. | The twin's `instructions` and fallback descriptions carry the same wording; the runner scores **confirmation compliance** from the transcript. |
-| Is there a `confirm: true` / token parameter? | Not observed. | `confirm_mode: echo` is implemented in case a dump shows one. |
-| Client order id? | `spot.newOrder` accepts `newClientOrderId` (Binance REST semantics, ≤ 36 chars) and echoes it as `clientOrderId`. Futures likewise. | Accepted and echoed identically. |
-| Numbers: strings or numbers? | Binance REST style — prices/quantities are **strings** ("79972.56000000"), ids are integers. | Same. |
-| Futures tools present for the Agentic sub-account? | Yes: `futures_usds.*` (USDⓈ-M) and `futures_coin.*`. Leverage is a per-symbol account setting changed via `futures_usds.changeLeverage` (not an order parameter). | Same (isolated margin only). |
-| OCO / stop types? | Spot: STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT, LIMIT_MAKER (REST order types). OCO not observed in the exposed set. | Same; OCO not simulated. |
-| Meta tools? | `tool_search(category)` and `tool_execute(toolName, arguments)` expose the wider catalog. | Same. |
-| Latency / rate limits? | Handshake ~1-3 s per step over the hosted gateway; tool calls typically < 1 s. | `engine.latency` models the fill delay, not the gateway RTT. |
-
-**Verify after `rehearsal schema dump`:** the dump captures `schemas/samples/spot_newOrder.json` for a
-rejected order (symbol FOOBAR) so the exact error envelope is known; update `server.error_style` if the
-real server wraps errors differently than `{"code": -1121, "msg": "Invalid symbol."}` with `isError: true`.
+| Tool surface | `tools/list` is **paginated**: 81 always-exposed tools over 2 pages. `tool_search(category)` reveals a **316-tool hidden catalog**; any of them runs through `tool_execute(toolName, arguments)`. | `schemas/tools.json` (81, verbatim) + `schemas/catalog.json` (316). `rehearsal schema validate --live-url` = ZERO DRIFT. |
+| Names | `<product>.<method>` (`spot.newOrder`, `futures_usds.changeInitialLeverage`, `futures_usds.positionInformationV2`, `wallet.userUniversalTransfer`, `convert.sendQuoteRequest`). Claude Code shows them with underscores. | Same; both forms resolve. |
+| `initialize` | serverInfo `Tesla-MCP-Server` v1.0.0, long `instructions` describing products, funding link, cross-tool workflows and the confirmation rule. One resource: `resource://portfolio/asset-analysis-workflow`. | serverInfo, instructions and the resource are mirrored from the dump. |
+| Confirmation of writes | Instruction-based: the server instructions and tool descriptions require restating the order and waiting for the user; no MCP elicitation, no confirm token. | `schema.confirm_mode: none`; the runner scores **confirmation compliance** from the transcript. |
+| Error envelope | A rejected call is a **JSON-RPC error** `{"code": -32603, "message": "{\"code\":-1013,\"msg\":\"Filter failure: LOT_SIZE\"}"}`, not an `isError` result. Missing params: `{"code":-1102,"msg":"Param 'quantity' or 'quoteOrderQty' must be sent, but both were empty/null!"}`. Unknown `tool_execute` target: message `Tool not found: '<name>'. Call tool_search with a category from its inputSchema.enum to discover available toolName, or call tools/list to see always-exposed tools.` | `server.error_style: jsonrpc` (default) reproduces all three; `result` style available. |
+| Successful call | `content[0].text` = JSON string **and** `structuredContent` = the same object. Numbers are strings (Binance REST style), ids are integers. | Same. |
+| Client order id | `spot.newOrder` accepts `newClientOrderId` (≤ 36 chars) and echoes it as `clientOrderId`; futures likewise. | Accepted and echoed. |
+| Futures account defaults | A fresh Agentic sub-account reports **marginType cross, leverage 20** on every symbol; `positionInformationV2` returns a zero row for the queried symbol; `futuresAccountBalanceV3` lists many zero-balance assets. | `engine.usdm.default_margin_type: CROSSED`, `default_leverage: 20`; cross liquidation on aggregate margin balance; isolated available via `changeMarginType`. |
+| Products | Spot, USDⓈ-M, COIN-M, Margin, Convert, Wallet, Sub-account, AI analysis. | Spot + USDⓈ-M + Convert + Transfer simulated; COIN-M public market data passes through; COIN-M/Margin trading and AI reports return `TWIN_UNSUPPORTED` (-9001) and are counted in the report. |
+| OCO / stop types | Spot OCO/OTO lists exist in the hidden catalog (`spot.orderListOco`, ...). Spot stop types are the REST ones. | Stops simulated; order lists not. |
+| Latency | Gateway round trip ≈ 0.4–1.5 s per call from Europe. | Not modelled (fill latency is). |

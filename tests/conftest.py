@@ -20,7 +20,8 @@ def make_config(**engine_overrides: Any) -> Config:
         "market": {"mode": "replay", "replay_fixture": str(FIXTURES), "replay_speed": 0},
         "engine": {"initial_balances": {"spot": {"USDT": 1000}, "usdm": {"USDT": 0}},
                    "latency": {"mean_ms": 0, "sd_ms": 0, "fixed_ms": 0}, "queue_factor": 1.0,
-                   "usdm": {"default_leverage": 5, "maintenance_rate": 0.005, "liquidation_fee": 0.0}, **engine_overrides},
+                   "usdm": {"default_leverage": 5, "default_margin_type": "ISOLATED", "maintenance_rate": 0.005, "liquidation_fee": 0.0},
+                   **engine_overrides},
         "policy": {"enforce": False, "symbol_allowlist": ["BTCUSDT", "ETHUSDT"], "max_order_notional_usdt": 500,
                    "max_gross_exposure_usdt": 2000, "max_leverage": 10, "max_orders_per_minute": 100},
     }

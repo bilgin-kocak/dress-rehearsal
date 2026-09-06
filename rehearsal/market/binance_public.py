@@ -19,7 +19,7 @@ log = logging.getLogger("rehearsal.market")
 class BinancePublic:
     def __init__(self, spot_base: str = "https://api.binance.com", usdm_base: str = "https://fapi.binance.com",
                  timeout: float = 10.0):
-        self.bases = {"spot": spot_base.rstrip("/"), "usdm": usdm_base.rstrip("/")}
+        self.bases = {"spot": spot_base.rstrip("/"), "usdm": usdm_base.rstrip("/"), "coinm": "https://dapi.binance.com"}
         self.client = httpx.Client(timeout=timeout, headers={"User-Agent": "dress-rehearsal/0.1"})
         self._backoff_until = 0.0
         self._lock = threading.Lock()
@@ -137,6 +137,47 @@ class BinancePublic:
 
     def usdm_agg_trades(self, symbol: str, limit: int | None = None) -> Any:
         return self._get("usdm", "/fapi/v1/aggTrades", {"symbol": symbol, "limit": limit})
+
+    def usdm_mark_price_klines(self, symbol: str, interval: str, start: int | None = None, end: int | None = None, limit: int | None = None) -> Any:
+        return self._get("usdm", "/fapi/v1/markPriceKlines", {"symbol": symbol, "interval": interval, "startTime": start, "endTime": end, "limit": limit})
+
+    def usdm_index_price_klines(self, pair: str, interval: str, start: int | None = None, end: int | None = None, limit: int | None = None) -> Any:
+        return self._get("usdm", "/fapi/v1/indexPriceKlines", {"pair": pair, "interval": interval, "startTime": start, "endTime": end, "limit": limit})
+
+    def usdm_premium_index_klines(self, symbol: str, interval: str, start: int | None = None, end: int | None = None, limit: int | None = None) -> Any:
+        return self._get("usdm", "/fapi/v1/premiumIndexKlines", {"symbol": symbol, "interval": interval, "startTime": start, "endTime": end, "limit": limit})
+
+    def usdm_continuous_klines(self, pair: str, contract_type: str, interval: str, start: int | None = None, end: int | None = None,
+                               limit: int | None = None) -> Any:
+        return self._get("usdm", "/fapi/v1/continuousKlines", {"pair": pair, "contractType": contract_type, "interval": interval,
+                                                               "startTime": start, "endTime": end, "limit": limit})
+
+    def usdm_funding_info(self) -> Any:
+        return self._get("usdm", "/fapi/v1/fundingInfo")
+
+    # ---- coinm (dapi)
+    def coinm_exchange_info(self) -> Any:
+        return self._get("coinm", "/dapi/v1/exchangeInfo")
+
+    def coinm_klines(self, symbol: str, interval: str, start: int | None = None, end: int | None = None, limit: int | None = None) -> Any:
+        return self._get("coinm", "/dapi/v1/klines", {"symbol": symbol, "interval": interval, "startTime": start, "endTime": end, "limit": limit})
+
+    def coinm_mark_price_klines(self, symbol: str, interval: str, start: int | None = None, end: int | None = None, limit: int | None = None) -> Any:
+        return self._get("coinm", "/dapi/v1/markPriceKlines", {"symbol": symbol, "interval": interval, "startTime": start, "endTime": end, "limit": limit})
+
+    def coinm_index_price_klines(self, pair: str, interval: str, start: int | None = None, end: int | None = None, limit: int | None = None) -> Any:
+        return self._get("coinm", "/dapi/v1/indexPriceKlines", {"pair": pair, "interval": interval, "startTime": start, "endTime": end, "limit": limit})
+
+    def coinm_premium_index_klines(self, symbol: str, interval: str, start: int | None = None, end: int | None = None, limit: int | None = None) -> Any:
+        return self._get("coinm", "/dapi/v1/premiumIndexKlines", {"symbol": symbol, "interval": interval, "startTime": start, "endTime": end, "limit": limit})
+
+    def coinm_continuous_klines(self, pair: str, contract_type: str, interval: str, start: int | None = None, end: int | None = None,
+                                limit: int | None = None) -> Any:
+        return self._get("coinm", "/dapi/v1/continuousKlines", {"pair": pair, "contractType": contract_type, "interval": interval,
+                                                                "startTime": start, "endTime": end, "limit": limit})
+
+    def coinm_ticker_price(self, symbol: str | None = None, pair: str | None = None) -> Any:
+        return self._get("coinm", "/dapi/v1/ticker/price", {"symbol": symbol, "pair": pair})
 
 
 class BinanceHTTPError(Exception):

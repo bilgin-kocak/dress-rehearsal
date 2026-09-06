@@ -13,16 +13,23 @@ from typing import Any
 
 import anyio
 from mcp.server import Server, ServerRequestContext
+from mcp.shared.exceptions import MCPError as McpError
 from mcp.types import (
+    INTERNAL_ERROR,
     CallToolRequestParams,
     CallToolResult,
     ElicitRequest,
     ElicitRequestFormParams,
     ElicitResult,
     InputRequiredResult,
+    ListResourcesResult,
     ListToolsResult,
     PaginatedRequestParams,
+    ReadResourceRequestParams,
+    ReadResourceResult,
+    Resource,
     TextContent,
+    TextResourceContents,
     Tool,
     ToolAnnotations,
 )
@@ -32,7 +39,7 @@ from rehearsal.config import Config
 from rehearsal.engine.engine import Engine
 from rehearsal.server.catalog import ToolCatalog, ToolSpec
 from rehearsal.server.confirm import Confirmer, restatement
-from rehearsal.server.errors import BinanceError
+from rehearsal.server.errors import BinanceError, ToolNotFound
 from rehearsal.server.handlers import HANDLERS, ToolContext
 
 log = logging.getLogger("rehearsal.server")
@@ -57,8 +64,34 @@ class Twin:
 
     # ------------------------------------------------------------------ server factory
     def make_server(self) -> Server:
-        return Server(self.name, version=__version__, instructions=INSTRUCTIONS,
-                      on_list_tools=self._list_tools, on_call_tool=self._call_tool)
+        # Mirror the real server's initialize payload when we have it (name, version, instructions).
+        init = self.catalog.init or {}
+        si = init.get("server_info") or {}
+        name = si.get("name") or self.name
+        version = str(si.get("version") or __version__)
+        instructions = init.get("instructions") or INSTRUCTIONS
+        kw: dict[str, Any] = {}
+        if self.catalog.resources:
+            kw.update(on_list_resources=self._list_resources, on_read_resource=self._read_resource)
+        return Server(name, version=version, title=si.get("title"), instructions=instructions,
+                      on_list_tools=self._list_tools, on_call_tool=self._call_tool, **kw)
+
+    async def _list_resources(self, ctx: ServerRequestContext, params: PaginatedRequestParams | None) -> ListResourcesResult:
+        res = []
+        for r in self.catalog.resources:
+            res.append(Resource(uri=r["uri"], name=r.get("name") or r["uri"], description=r.get("description"),
+                                mime_type=r.get("mimeType"), size=r.get("size")))
+        return ListResourcesResult(resources=res)
+
+    async def _read_resource(self, ctx: ServerRequestContext, params: ReadResourceRequestParams) -> ReadResourceResult:
+        for r in self.catalog.resources:
+            if str(r["uri"]) == str(params.uri):
+                contents = []
+                for c in r.get("contents") or []:
+                    contents.append(TextResourceContents(uri=c.get("uri", r["uri"]), mime_type=c.get("mimeType", r.get("mimeType")),
+                                                         text=c.get("text", "")))
+                return ReadResourceResult(contents=contents)
+        raise McpError(INTERNAL_ERROR, f"Resource not found: {params.uri}")
 
     # ------------------------------------------------------------------ MCP handlers
     async def _list_tools(self, ctx: ServerRequestContext, params: PaginatedRequestParams | None) -> ListToolsResult:
@@ -97,7 +130,17 @@ class Twin:
                                       is_error=True)
 
         outcome = await anyio.to_thread.run_sync(self.execute, name, args, session_id, "agent")
+        if outcome["status"] == "error" and self.cfg.server.error_style == "jsonrpc":
+            # The real server returns Binance errors as JSON-RPC errors (-32603) whose message is the raw
+            # Binance JSON, e.g. {"code":-1013,"msg":"Filter failure: LOT_SIZE"}.
+            raise McpError(INTERNAL_ERROR, self.error_message(outcome["result"]))
         return self.to_result(outcome)
+
+    @staticmethod
+    def error_message(result: Any) -> str:
+        if isinstance(result, dict) and result.get("_raw_message"):
+            return str(result["_raw_message"])
+        return json.dumps(result, separators=(",", ":"), ensure_ascii=False)
 
     def _session_from_ctx(self, ctx: ServerRequestContext) -> str | None:
         req = getattr(ctx, "request", None)
@@ -145,6 +188,8 @@ class Twin:
             result = fn(ctx, call_args)
         except BinanceError as e:
             result, status, error_code = e.payload(), "error", e.code
+        except ToolNotFound as e:
+            result, status, error_code = {"code": -9004, "msg": str(e), "_raw_message": str(e)}, "error", -9004
         except Exception as e:  # pragma: no cover - defensive
             log.exception("handler crashed for %s: %s", name, e)
             result, status, error_code = {"code": -1000, "msg": "An unknown error occurred while processing the request."}, "error", -1000
@@ -173,7 +218,10 @@ class Twin:
     def _dispatch_inner(self, ctx: ToolContext, name: str, args: dict[str, Any]) -> Any:
         out = self.execute(name, args, ctx.session_id, ctx.source, via="tool_execute")
         if out["status"] == "error":
-            raise BinanceError(out["result"].get("code", -1000), out["result"].get("msg", "error"))
+            r = out["result"]
+            if isinstance(r, dict) and r.get("_raw_message"):
+                raise ToolNotFound(str(r["_raw_message"]))
+            raise BinanceError(r.get("code", -1000), r.get("msg", "error"))
         return out["result"]
 
     # ------------------------------------------------------------------ result shaping

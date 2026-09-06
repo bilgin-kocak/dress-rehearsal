@@ -59,6 +59,9 @@ class ToolCatalog:
         self.unmapped_policy = "passthrough_public"
         self.map: dict[str, dict[str, Any]] = {}
         self.unmapped: list[str] = []
+        self.catalog: dict[str, dict[str, Any]] = {}  # hidden catalog (tool_search / tool_execute)
+        self.resources: list[dict[str, Any]] = []
+        self.init: dict[str, Any] = {}
         self.load()
 
     # ------------------------------------------------------------------ loading
@@ -79,6 +82,23 @@ class ToolCatalog:
         else:
             data = {"tools": []}
         raw_tools = data.get("tools") or data.get("result", {}).get("tools") or []
+        self.init = (data.get("_meta") or {}).get("init") or {}
+        self.catalog = {}
+        self.resources = []
+        if self.source == "mirrored" and self.tools_path is not None:
+            cpath = self.tools_path.parent / "catalog.json"
+            if cpath.exists():
+                try:
+                    for t in json.loads(cpath.read_text()).get("tools", []):
+                        self.catalog[t["name"]] = t
+                except Exception:
+                    pass
+            rpath = self.tools_path.parent / "resources.json"
+            if rpath.exists():
+                try:
+                    self.resources = json.loads(rpath.read_text()).get("resources", [])
+                except Exception:
+                    pass
 
         map_file = self.cfg.path(self.cfg.schema_.tool_map)
         m: dict[str, Any] = {}
@@ -123,19 +143,42 @@ class ToolCatalog:
         key = self._index.get(name) or self._index.get(normalize(name)) or self._index.get(underscored(normalize(name)))
         if key:
             return self.tools[key]
-        # Catalog-only name (tool_execute of something not in tools/list): infer.
+        # Catalog-only name (tool_execute of something not in tools/list).
         canon = normalize(name)
+        hidden = self.catalog.get(canon) or self.catalog.get(name)
         spec_map = {normalize(k): v for k, v in self.map.items()}.get(canon)
         if spec_map:
-            return ToolSpec(name=canon, category=spec_map.get("category", "unsupported"), handler=spec_map.get("handler", "unsupported"),
+            spec = ToolSpec(name=canon, category=spec_map.get("category", "unsupported"), handler=spec_map.get("handler", "unsupported"),
                             market=spec_map.get("market"), write=bool(spec_map.get("write", False)), mapped=True)
-        return None
+        elif hidden is not None:
+            spec = self._infer(canon)
+        else:
+            return None
+        if hidden is not None:
+            spec.description = hidden.get("description", "") or ""
+            spec.input_schema = hidden.get("inputSchema") or {"type": "object", "properties": {}}
+            spec.raw = hidden
+        return spec
+
+    def is_known(self, name: str) -> bool:
+        """Exposed or in the hidden catalog (i.e. exists on the real server)."""
+        canon = normalize(name)
+        return canon in self._index or name in self._index or canon in self.catalog or name in self.catalog
 
     def list_for_mcp(self) -> list[ToolSpec]:
         return list(self.tools.values())
 
     def search(self, category: str | None, query: str | None = None) -> list[dict[str, Any]]:
         cat = (category or "").lower()
+        if self.catalog:
+            out = []
+            for t in self.catalog.values():
+                if cat and cat != "all" and str(t.get("_category", "")).lower() != cat:
+                    continue
+                if query and query.lower() not in (t["name"] + " " + t.get("description", "")).lower():
+                    continue
+                out.append({"name": t["name"], "description": t.get("description", ""), "inputSchema": t.get("inputSchema") or {}})
+            return out
         out = []
         for spec in self.tools.values():
             n = spec.name.lower()
@@ -175,8 +218,10 @@ class ToolCatalog:
             "tools_file": str(self.tools_path) if self.tools_path else None,
             "mirrored_at": self.mirrored_at,
             "tool_count": len(self.tools),
+            "catalog_count": len(self.catalog),
             "unmapped": self.unmapped,
             "write_tools": [t.name for t in self.tools.values() if t.write],
+            "server_info": self.init.get("server_info"),
         }
 
 
