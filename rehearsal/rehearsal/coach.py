@@ -214,8 +214,7 @@ def run_coach(cfg: Config, strategy: Path, sessions: int, dev_fixture: str, hold
         dev_report = rep
         timeline.append({"step": f"v{v} on dev window", "run_id": rid, "fixture": dev_fixture, "passed": rep["gate"]["passed"],
                          "reasons": rep["gate"]["reasons"], "summary": {k: rep["summary"].get(k) for k in
-                         ("tool_calls", "rejected", "rejection_rate", "policy_violations", "liquidations", "confirmation_compliance", "max_drawdown_pct", "flattened_sessions")}})
-        print(render_gate(cfg, rep, rep["gate"]))
+                         ("tool_calls", "rejected", "rejection_rate", "policy_violations", "liquidations", "confirmation_compliance", "max_drawdown_pct", "flattened_sessions", "total_cost_usd")}})
         if rep["gate"]["passed"]:
             break
         if it > max_iterations:
@@ -258,8 +257,7 @@ def run_coach(cfg: Config, strategy: Path, sessions: int, dev_fixture: str, hold
         holdout_report = _run(cfg, cur, sessions, holdout_fixture, rid, port, f".rehearsal/{rid}.db")
         timeline.append({"step": f"v{v} on HELD-OUT window", "run_id": rid, "fixture": holdout_fixture, "passed": holdout_report["gate"]["passed"],
                          "reasons": holdout_report["gate"]["reasons"], "summary": {k: holdout_report["summary"].get(k) for k in
-                         ("tool_calls", "rejected", "rejection_rate", "policy_violations", "liquidations", "confirmation_compliance", "max_drawdown_pct", "flattened_sessions")}})
-        print(render_gate(cfg, holdout_report, holdout_report["gate"]))
+                         ("tool_calls", "rejected", "rejection_rate", "policy_violations", "liquidations", "confirmation_compliance", "max_drawdown_pct", "flattened_sessions", "total_cost_usd")}})
     fp_after = gate_fingerprint(cfg)
     verdict = bool(holdout_report and holdout_report["gate"]["passed"]) if holdout_fixture else bool(dev_report and dev_report["gate"]["passed"])
     result = {

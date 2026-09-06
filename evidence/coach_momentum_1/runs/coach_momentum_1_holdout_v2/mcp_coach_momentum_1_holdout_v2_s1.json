@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "binance-twin": {
+      "type": "http",
+      "url": "http://127.0.0.1:8782/mcp",
+      "headers": {
+        "X-Rehearsal-Session": "coach_momentum_1_holdout_v2_s1"
+      }
+    }
+  }
+}

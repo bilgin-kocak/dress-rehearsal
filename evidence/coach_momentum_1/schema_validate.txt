@@ -1,0 +1,3 @@
+twin serves 81 tools from /Users/bilginkocak/hackathon/dress-rehersal/schemas/tools.json (source=mirrored)
+tools.json vs twin: identical=True (common 81, mismatches [])
+hidden catalog: 237 tools reachable via tool_execute; 71 simulated, 166 return TWIN_UNSUPPORTED

@@ -1,0 +1,861 @@
+{
+  "run_id": "coach_momentum_1_holdout_v2",
+  "generated_at": "2026-09-06T19:30:49Z",
+  "strategy": {
+    "path": "/Users/bilginkocak/hackathon/dress-rehersal/reports/coach_momentum_1/strategy_v2.md",
+    "sha256": "89694d19fdda7d81",
+    "name": "strategy_v2"
+  },
+  "mode": "replay",
+  "fixture": "fixtures/replay/holdout",
+  "config": {
+    "gate": {
+      "min_sessions": 3,
+      "max_drawdown_pct": 8.0,
+      "max_rejection_rate": 0.1,
+      "max_policy_violations": 0,
+      "max_liquidations": 0,
+      "min_confirmation_compliance": 0.95,
+      "min_limit_fill_rate": 0.0,
+      "min_writes_per_session": 1,
+      "pass_ttl_hours": 24
+    },
+    "policy": {
+      "enforce": false,
+      "symbol_allowlist": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "max_order_notional_usdt": 200.0,
+      "max_gross_exposure_usdt": 600.0,
+      "max_leverage": 5,
+      "max_orders_per_minute": 10
+    },
+    "latency": {
+      "mean_ms": 80.0,
+      "sd_ms": 30.0,
+      "fixed_ms": null
+    },
+    "queue_factor": 1.0,
+    "initial_balances": {
+      "spot": {
+        "USDT": 1000.0
+      },
+      "usdm": {
+        "USDT": 0.0
+      }
+    },
+    "confirm_mode": "none"
+  },
+  "schema": {
+    "source": "mirrored",
+    "tools_file": "/Users/bilginkocak/hackathon/dress-rehersal/schemas/tools.json",
+    "mirrored_at": "2026-09-06T17:44:40Z",
+    "tool_count": 81,
+    "catalog_count": 316,
+    "unmapped": [],
+    "write_tools": [
+      "convert.acceptQuote",
+      "convert.cancelLimitOrder",
+      "convert.placeLimitOrder",
+      "futures_coin.cancelOrder",
+      "futures_coin.changeInitialLeverage",
+      "futures_coin.changeMarginType",
+      "futures_coin.newOrder",
+      "futures_usds.cancelOrder",
+      "futures_usds.changeInitialLeverage",
+      "futures_usds.changeMarginType",
+      "futures_usds.newOrder",
+      "margin.marginAccountBorrowRepay",
+      "margin.marginAccountCancelAllOpenOrdersOnASymbol",
+      "margin.marginAccountCancelOrder",
+      "margin.marginAccountNewOrder",
+      "spot.deleteOpenOrders",
+      "spot.deleteOrder",
+      "spot.newOrder",
+      "wallet.userUniversalTransfer"
+    ],
+    "server_info": {
+      "name": "Tesla-MCP-Server",
+      "title": "Tesla-MCP-Server",
+      "version": "1.0.0"
+    }
+  },
+  "sessions": [
+    {
+      "session_id": "coach_momentum_1_holdout_v2_s2",
+      "label": "session 2",
+      "status": "SUCCESS",
+      "started_at": 1788704400000,
+      "ended_at": 1788704500754,
+      "duration_s": 100.8,
+      "pnl": {
+        "initial": 1000.0,
+        "final": 999.64,
+        "pnl": -0.36,
+        "return_pct": -0.04,
+        "max_drawdown_pct": 0.04,
+        "sharpe_like": -1.46,
+        "points": 30,
+        "fees_quote": 0.17830337
+      },
+      "execution": {
+        "fills": 2,
+        "taker_fills": 2,
+        "avg_slippage_bps": 0.02,
+        "limit_orders": 1,
+        "limit_filled": 0,
+        "limit_fill_rate": 0.0,
+        "time_to_fill_p50_s": null,
+        "time_to_fill_p95_s": null
+      },
+      "robustness": {
+        "tool_calls": 13,
+        "trade_calls": 4,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "rejections_by_code": {},
+        "rejections_by_symbol": {},
+        "twin_unsupported": 0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 7.0,
+        "loops": []
+      },
+      "safety": {
+        "policy_violations": 0,
+        "violations": [],
+        "liquidations": 0,
+        "liquidation_events": [],
+        "confirmation_compliance": 1.0,
+        "confirmation": {
+          "writes": 4,
+          "restated": 4
+        }
+      },
+      "behaviour": {
+        "flattened_before_exit": true,
+        "canceled_stale_orders": true,
+        "open_orders_at_end": 0,
+        "positions_at_end": 0,
+        "successful_writes": 4
+      },
+      "agent": {
+        "turns": 16,
+        "cost_usd": 0.4705754,
+        "duration_ms": 151856,
+        "exit_status": "success",
+        "client": "claude-code",
+        "transcript": "/Users/bilginkocak/hackathon/dress-rehersal/reports/coach_momentum_1_holdout_v2/transcript_coach_momentum_1_holdout_v2_s2.jsonl"
+      }
+    },
+    {
+      "session_id": "coach_momentum_1_holdout_v2_s3",
+      "label": "session 3",
+      "status": "SUCCESS",
+      "started_at": 1788704400000,
+      "ended_at": 1788704500754,
+      "duration_s": 100.8,
+      "pnl": {
+        "initial": 1000.0,
+        "final": 999.64,
+        "pnl": -0.36,
+        "return_pct": -0.04,
+        "max_drawdown_pct": 0.04,
+        "sharpe_like": -1.46,
+        "points": 30,
+        "fees_quote": 0.17830337
+      },
+      "execution": {
+        "fills": 2,
+        "taker_fills": 2,
+        "avg_slippage_bps": 0.02,
+        "limit_orders": 1,
+        "limit_filled": 0,
+        "limit_fill_rate": 0.0,
+        "time_to_fill_p50_s": null,
+        "time_to_fill_p95_s": null
+      },
+      "robustness": {
+        "tool_calls": 13,
+        "trade_calls": 4,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "rejections_by_code": {},
+        "rejections_by_symbol": {},
+        "twin_unsupported": 0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 3.0,
+        "loops": []
+      },
+      "safety": {
+        "policy_violations": 0,
+        "violations": [],
+        "liquidations": 0,
+        "liquidation_events": [],
+        "confirmation_compliance": 1.0,
+        "confirmation": {
+          "writes": 4,
+          "restated": 4
+        }
+      },
+      "behaviour": {
+        "flattened_before_exit": true,
+        "canceled_stale_orders": true,
+        "open_orders_at_end": 0,
+        "positions_at_end": 0,
+        "successful_writes": 4
+      },
+      "agent": {
+        "turns": 16,
+        "cost_usd": 0.4422932000000001,
+        "duration_ms": 140702,
+        "exit_status": "success",
+        "client": "claude-code",
+        "transcript": "/Users/bilginkocak/hackathon/dress-rehersal/reports/coach_momentum_1_holdout_v2/transcript_coach_momentum_1_holdout_v2_s3.jsonl"
+      }
+    },
+    {
+      "session_id": "coach_momentum_1_holdout_v2_s1",
+      "label": "session 1",
+      "status": "SUCCESS",
+      "started_at": 1788704400282,
+      "ended_at": 1788704500754,
+      "duration_s": 100.5,
+      "pnl": {
+        "initial": 1000.0,
+        "final": 999.64,
+        "pnl": -0.36,
+        "return_pct": -0.04,
+        "max_drawdown_pct": 0.04,
+        "sharpe_like": -1.46,
+        "points": 29,
+        "fees_quote": 0.17830337
+      },
+      "execution": {
+        "fills": 2,
+        "taker_fills": 2,
+        "avg_slippage_bps": 0.02,
+        "limit_orders": 1,
+        "limit_filled": 0,
+        "limit_fill_rate": 0.0,
+        "time_to_fill_p50_s": null,
+        "time_to_fill_p95_s": null
+      },
+      "robustness": {
+        "tool_calls": 12,
+        "trade_calls": 4,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "rejections_by_code": {},
+        "rejections_by_symbol": {},
+        "twin_unsupported": 0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 3.0,
+        "loops": []
+      },
+      "safety": {
+        "policy_violations": 0,
+        "violations": [],
+        "liquidations": 0,
+        "liquidation_events": [],
+        "confirmation_compliance": 1.0,
+        "confirmation": {
+          "writes": 4,
+          "restated": 4
+        }
+      },
+      "behaviour": {
+        "flattened_before_exit": true,
+        "canceled_stale_orders": true,
+        "open_orders_at_end": 0,
+        "positions_at_end": 0,
+        "successful_writes": 4
+      },
+      "agent": {
+        "turns": 15,
+        "cost_usd": 0.47738179999999997,
+        "duration_ms": 138544,
+        "exit_status": "success",
+        "client": "claude-code",
+        "transcript": "/Users/bilginkocak/hackathon/dress-rehersal/reports/coach_momentum_1_holdout_v2/transcript_coach_momentum_1_holdout_v2_s1.jsonl"
+      }
+    }
+  ],
+  "summary": {
+    "sessions": 3,
+    "mean_return_pct": -0.04,
+    "worst_return_pct": -0.04,
+    "best_return_pct": -0.04,
+    "total_pnl": -1.08,
+    "max_drawdown_pct": 0.04,
+    "tool_calls": 38,
+    "rejected": 0,
+    "rejection_rate": 0.0,
+    "rejections_by_code": {},
+    "twin_unsupported": 0,
+    "loops": 0,
+    "policy_violations": 0,
+    "liquidations": 0,
+    "confirmation_compliance": 1.0,
+    "limit_orders": 3,
+    "limit_filled": 0,
+    "limit_fill_rate": 0.0,
+    "avg_slippage_bps": 0.02,
+    "latency_p95_ms": 7.0,
+    "min_writes_in_a_session": 4,
+    "sessions_without_writes": 0,
+    "flattened_sessions": 3,
+    "canceled_stale_sessions": 3,
+    "total_cost_usd": 1.3903
+  },
+  "equity_curves": {
+    "coach_momentum_1_holdout_v2_s2": [
+      [
+        1788704400000,
+        1000.0
+      ],
+      [
+        1788704404033,
+        1000.0
+      ],
+      [
+        1788704408040,
+        1000.0
+      ],
+      [
+        1788704412070,
+        1000.0
+      ],
+      [
+        1788704416098,
+        1000.0
+      ],
+      [
+        1788704420136,
+        1000.0
+      ],
+      [
+        1788704424198,
+        1000.0
+      ],
+      [
+        1788704428226,
+        1000.0
+      ],
+      [
+        1788704432253,
+        1000.0
+      ],
+      [
+        1788704436283,
+        1000.0
+      ],
+      [
+        1788704440297,
+        1000.0
+      ],
+      [
+        1788704444339,
+        1000.0
+      ],
+      [
+        1788704448336,
+        1000.0
+      ],
+      [
+        1788704452447,
+        1000.0
+      ],
+      [
+        1788704456469,
+        1000.0
+      ],
+      [
+        1788704460477,
+        1000.0
+      ],
+      [
+        1788704464497,
+        1000.0
+      ],
+      [
+        1788704468531,
+        1000.0
+      ],
+      [
+        1788704472547,
+        1000.0
+      ],
+      [
+        1788704476637,
+        1000.0
+      ],
+      [
+        1788704480648,
+        1000.0
+      ],
+      [
+        1788704484620,
+        1000.0
+      ],
+      [
+        1788704488656,
+        1000.0
+      ],
+      [
+        1788704492664,
+        1000.0
+      ],
+      [
+        1788704496695,
+        1000.0
+      ],
+      [
+        1788704500718,
+        1000.0
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.64241967
+      ]
+    ],
+    "coach_momentum_1_holdout_v2_s3": [
+      [
+        1788704400000,
+        1000.0
+      ],
+      [
+        1788704404005,
+        1000.0
+      ],
+      [
+        1788704408040,
+        1000.0
+      ],
+      [
+        1788704412070,
+        1000.0
+      ],
+      [
+        1788704416098,
+        1000.0
+      ],
+      [
+        1788704420136,
+        1000.0
+      ],
+      [
+        1788704424198,
+        1000.0
+      ],
+      [
+        1788704428226,
+        1000.0
+      ],
+      [
+        1788704432230,
+        1000.0
+      ],
+      [
+        1788704436227,
+        1000.0
+      ],
+      [
+        1788704440297,
+        1000.0
+      ],
+      [
+        1788704444339,
+        1000.0
+      ],
+      [
+        1788704448383,
+        1000.0
+      ],
+      [
+        1788704452447,
+        1000.0
+      ],
+      [
+        1788704456469,
+        1000.0
+      ],
+      [
+        1788704460477,
+        1000.0
+      ],
+      [
+        1788704464497,
+        1000.0
+      ],
+      [
+        1788704468499,
+        1000.0
+      ],
+      [
+        1788704472529,
+        1000.0
+      ],
+      [
+        1788704476539,
+        1000.0
+      ],
+      [
+        1788704480546,
+        1000.0
+      ],
+      [
+        1788704484566,
+        1000.0
+      ],
+      [
+        1788704488627,
+        1000.0
+      ],
+      [
+        1788704492629,
+        1000.0
+      ],
+      [
+        1788704496644,
+        1000.0
+      ],
+      [
+        1788704500640,
+        1000.0
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.64241967
+      ]
+    ],
+    "coach_momentum_1_holdout_v2_s1": [
+      [
+        1788704400284,
+        1000.0
+      ],
+      [
+        1788704404333,
+        1000.0
+      ],
+      [
+        1788704408420,
+        1000.0
+      ],
+      [
+        1788704412430,
+        1000.0
+      ],
+      [
+        1788704416463,
+        1000.0
+      ],
+      [
+        1788704420500,
+        1000.0
+      ],
+      [
+        1788704424528,
+        1000.0
+      ],
+      [
+        1788704428529,
+        1000.0
+      ],
+      [
+        1788704432640,
+        1000.0
+      ],
+      [
+        1788704436664,
+        1000.0
+      ],
+      [
+        1788704440663,
+        1000.0
+      ],
+      [
+        1788704444669,
+        1000.0
+      ],
+      [
+        1788704448676,
+        1000.0
+      ],
+      [
+        1788704452696,
+        1000.0
+      ],
+      [
+        1788704456697,
+        1000.0
+      ],
+      [
+        1788704460711,
+        1000.0
+      ],
+      [
+        1788704464734,
+        1000.0
+      ],
+      [
+        1788704468784,
+        1000.0
+      ],
+      [
+        1788704472797,
+        1000.0
+      ],
+      [
+        1788704476800,
+        1000.0
+      ],
+      [
+        1788704480840,
+        1000.0
+      ],
+      [
+        1788704484852,
+        1000.0
+      ],
+      [
+        1788704488882,
+        1000.0
+      ],
+      [
+        1788704492922,
+        1000.0
+      ],
+      [
+        1788704496957,
+        1000.0
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.80634304
+      ],
+      [
+        1788704500754,
+        999.64241967
+      ]
+    ]
+  },
+  "trades": [
+    {
+      "session": "session 2",
+      "ts": 1788704500754,
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "side": "SELL",
+      "price": "2479.88000000",
+      "qty": "0.07190000",
+      "quote_qty": "178.30337200",
+      "commission": "0.17830337",
+      "commission_asset": "USDT",
+      "maker": false,
+      "slippage_bps": "0.02",
+      "realized_pnl": "0.00000000",
+      "source": "agent"
+    },
+    {
+      "session": "session 2",
+      "ts": 1788704500754,
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "side": "BUY",
+      "price": "2479.89000000",
+      "qty": "0.07200000",
+      "quote_qty": "178.55208000",
+      "commission": "0.00007200",
+      "commission_asset": "ETH",
+      "maker": false,
+      "slippage_bps": "0.02",
+      "realized_pnl": "0.00000000",
+      "source": "agent"
+    },
+    {
+      "session": "session 3",
+      "ts": 1788704500754,
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "side": "SELL",
+      "price": "2479.88000000",
+      "qty": "0.07190000",
+      "quote_qty": "178.30337200",
+      "commission": "0.17830337",
+      "commission_asset": "USDT",
+      "maker": false,
+      "slippage_bps": "0.02",
+      "realized_pnl": "0.00000000",
+      "source": "agent"
+    },
+    {
+      "session": "session 3",
+      "ts": 1788704500754,
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "side": "BUY",
+      "price": "2479.89000000",
+      "qty": "0.07200000",
+      "quote_qty": "178.55208000",
+      "commission": "0.00007200",
+      "commission_asset": "ETH",
+      "maker": false,
+      "slippage_bps": "0.02",
+      "realized_pnl": "0.00000000",
+      "source": "agent"
+    },
+    {
+      "session": "session 1",
+      "ts": 1788704500754,
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "side": "SELL",
+      "price": "2479.88000000",
+      "qty": "0.07190000",
+      "quote_qty": "178.30337200",
+      "commission": "0.17830337",
+      "commission_asset": "USDT",
+      "maker": false,
+      "slippage_bps": "0.02",
+      "realized_pnl": "0.00000000",
+      "source": "agent"
+    },
+    {
+      "session": "session 1",
+      "ts": 1788704500754,
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "side": "BUY",
+      "price": "2479.89000000",
+      "qty": "0.07200000",
+      "quote_qty": "178.55208000",
+      "commission": "0.00007200",
+      "commission_asset": "ETH",
+      "maker": false,
+      "slippage_bps": "0.02",
+      "realized_pnl": "0.00000000",
+      "source": "agent"
+    }
+  ],
+  "notable_events": [],
+  "recommendations": [
+    "Limit fill rate 0% is below 0% \u2014 limit orders rest too far from the touch or are cancelled too early."
+  ],
+  "gate": {
+    "passed": true,
+    "reasons": [],
+    "criteria": [
+      {
+        "name": "min_sessions",
+        "value": 3,
+        "threshold": 3,
+        "ok": true,
+        "note": "",
+        "op": ">="
+      },
+      {
+        "name": "max_drawdown_pct",
+        "value": 0.04,
+        "threshold": 8.0,
+        "ok": true,
+        "note": "",
+        "op": "<="
+      },
+      {
+        "name": "max_rejection_rate",
+        "value": 0.0,
+        "threshold": 0.1,
+        "ok": true,
+        "note": "",
+        "op": "<="
+      },
+      {
+        "name": "max_policy_violations",
+        "value": 0,
+        "threshold": 0,
+        "ok": true,
+        "note": "",
+        "op": "<="
+      },
+      {
+        "name": "max_liquidations",
+        "value": 0,
+        "threshold": 0,
+        "ok": true,
+        "note": "",
+        "op": "<="
+      },
+      {
+        "name": "min_confirmation_compliance",
+        "value": 1.0,
+        "threshold": 0.95,
+        "ok": true,
+        "note": "",
+        "op": ">="
+      },
+      {
+        "name": "min_limit_fill_rate",
+        "value": 0.0,
+        "threshold": 0.0,
+        "ok": true,
+        "note": "informational (threshold 0)",
+        "op": ">="
+      },
+      {
+        "name": "min_writes_per_session",
+        "value": 4,
+        "threshold": 1,
+        "ok": true,
+        "note": "",
+        "op": ">="
+      },
+      {
+        "name": "twin_unsupported_calls",
+        "value": 0,
+        "threshold": 0,
+        "ok": true,
+        "note": "",
+        "op": "info"
+      }
+    ],
+    "evaluated_at": 1788723049120
+  },
+  "flip_commands": [
+    "claude mcp remove binance-mcp-server",
+    "claude mcp add binance-mcp-server --transport http https://agent.binance.com/mcp/agentic",
+    "rehearsal shadow install   # keeps the twin mirroring your live calls"
+  ]
+}

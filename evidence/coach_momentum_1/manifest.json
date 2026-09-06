@@ -1,0 +1,79 @@
+{
+  "coach_id": "coach_momentum_1",
+  "built_at": "2026-09-06T19:31:53Z",
+  "files": {
+    "COACH.md": "cb5e131da96c2e70",
+    "coach.json": "6921a0bd477fad67",
+    "coach_prompt.md": "9a85b845bacb4c2d",
+    "diff_v1_v2.patch": "77ca57a4c93f6e08",
+    "mcp_none.json": "139f0a6d5883f3ca",
+    "strategy_v1.md": "49817fce47d48445",
+    "strategy_v2.md": "89694d19fdda7d81",
+    "runs/coach_momentum_1_dev_v1/gate.json": "3208ce6b89eadbf8",
+    "runs/coach_momentum_1_dev_v1/mcp_coach_momentum_1_dev_v1_s1.json": "6c3222dd4db13dc2",
+    "runs/coach_momentum_1_dev_v1/mcp_coach_momentum_1_dev_v1_s2.json": "ce70e55ce668584b",
+    "runs/coach_momentum_1_dev_v1/mcp_coach_momentum_1_dev_v1_s3.json": "322bd5fbb57d6765",
+    "runs/coach_momentum_1_dev_v1/report.json": "e075a87b3e96d164",
+    "runs/coach_momentum_1_dev_v1/report.md": "4f7d89236909921c",
+    "runs/coach_momentum_1_dev_v1/session_1.json": "001f363f884bd671",
+    "runs/coach_momentum_1_dev_v1/session_2.json": "5315fba0e0377c6b",
+    "runs/coach_momentum_1_dev_v1/session_3.json": "0ceed738a0292616",
+    "runs/coach_momentum_1_dev_v1/transcript_coach_momentum_1_dev_v1_s1.jsonl": "c063572b608e943e",
+    "runs/coach_momentum_1_dev_v1/transcript_coach_momentum_1_dev_v1_s2.jsonl": "1a941d51a64a6076",
+    "runs/coach_momentum_1_dev_v1/transcript_coach_momentum_1_dev_v1_s3.jsonl": "d925c99667c54a45",
+    "runs/coach_momentum_1_dev_v2/gate.json": "2b671d95971adaa4",
+    "runs/coach_momentum_1_dev_v2/mcp_coach_momentum_1_dev_v2_s1.json": "d734fed80454bbf6",
+    "runs/coach_momentum_1_dev_v2/mcp_coach_momentum_1_dev_v2_s2.json": "468a2cbf48eb15f5",
+    "runs/coach_momentum_1_dev_v2/mcp_coach_momentum_1_dev_v2_s3.json": "2313be5cf98ea40e",
+    "runs/coach_momentum_1_dev_v2/report.json": "b71b81dbb859f9f3",
+    "runs/coach_momentum_1_dev_v2/report.md": "d6774ade2f7a244e",
+    "runs/coach_momentum_1_dev_v2/session_1.json": "3c40f72cf379232a",
+    "runs/coach_momentum_1_dev_v2/session_2.json": "b96020bae07178b0",
+    "runs/coach_momentum_1_dev_v2/session_3.json": "a5c5158a1685bae2",
+    "runs/coach_momentum_1_dev_v2/transcript_coach_momentum_1_dev_v2_s1.jsonl": "bc8a689ebee46c1a",
+    "runs/coach_momentum_1_dev_v2/transcript_coach_momentum_1_dev_v2_s2.jsonl": "ca143313d1062978",
+    "runs/coach_momentum_1_dev_v2/transcript_coach_momentum_1_dev_v2_s3.jsonl": "bc95e9e52e8b1ba7",
+    "runs/coach_momentum_1_holdout_v2/gate.json": "8e9609c40fbae5cd",
+    "runs/coach_momentum_1_holdout_v2/mcp_coach_momentum_1_holdout_v2_s1.json": "d99beb4713106942",
+    "runs/coach_momentum_1_holdout_v2/mcp_coach_momentum_1_holdout_v2_s2.json": "54d58b288d5bc6b3",
+    "runs/coach_momentum_1_holdout_v2/mcp_coach_momentum_1_holdout_v2_s3.json": "eb898c284dba39f3",
+    "runs/coach_momentum_1_holdout_v2/report.json": "009d14673423170c",
+    "runs/coach_momentum_1_holdout_v2/report.md": "8cbe93c7ffdc370b",
+    "runs/coach_momentum_1_holdout_v2/session_1.json": "83f4c60b5a928574",
+    "runs/coach_momentum_1_holdout_v2/session_2.json": "92a2994fde56b580",
+    "runs/coach_momentum_1_holdout_v2/session_3.json": "205169a73dde7df7",
+    "runs/coach_momentum_1_holdout_v2/transcript_coach_momentum_1_holdout_v2_s1.jsonl": "a95372c4e73ecff6",
+    "runs/coach_momentum_1_holdout_v2/transcript_coach_momentum_1_holdout_v2_s2.jsonl": "2a81f1903bc1cac6",
+    "runs/coach_momentum_1_holdout_v2/transcript_coach_momentum_1_holdout_v2_s3.jsonl": "f9798e72f843be67",
+    "fixtures/demo.meta.json": "e7e34a2184d820d1",
+    "fixtures/holdout.meta.json": "7f5d2ab1150529e7"
+  },
+  "fixture_events_sha256": {
+    "demo": "f8512f8e512c364e",
+    "holdout": "1d5ae25ff096d733"
+  },
+  "schema": {
+    "dumped_at": "2026-09-06T17:44:40Z",
+    "exposed": 81,
+    "catalog": 316,
+    "tools_json_sha256": "c05b27bad09f4682"
+  },
+  "strategy_versions": [
+    {
+      "version": 1,
+      "path": "prompts/strategy_momentum_v1.md",
+      "sha256": "49817fce47d48445"
+    },
+    {
+      "version": 2,
+      "path": "prompts/strategy_momentum_v1.v2.md",
+      "sha256": "89694d19fdda7d81"
+    }
+  ],
+  "verdict": "PASS",
+  "thresholds_fingerprint": {
+    "before": "fc9e174a06af909e",
+    "after": "fc9e174a06af909e",
+    "unchanged": true
+  }
+}

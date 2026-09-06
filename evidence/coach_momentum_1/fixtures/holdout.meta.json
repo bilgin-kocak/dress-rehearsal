@@ -1,0 +1,24 @@
+{
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "started": 1788704400000,
+  "ended": 1788705000000,
+  "events": 30836,
+  "streams": [
+    "depth20",
+    "aggTrade/trade",
+    "markPrice(premiumIndex poll)"
+  ],
+  "depth_ms": 1000,
+  "derived_from": "fixtures/replay/long_2026-09-06",
+  "note": "held-out window: used only to verify corrections, never to develop them",
+  "demo": {
+    "symbol": "ETHUSDT",
+    "side": "SELL",
+    "leverage": 125,
+    "qty": "15",
+    "note": "scripted demo params (unused for coach runs)"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "passed": false,
+  "reasons": [
+    "max_rejection_rate: 0.111 (limit <= 0.1)",
+    "max_policy_violations: 12 (limit <= 0)"
+  ],
+  "criteria": [
+    {
+      "name": "min_sessions",
+      "value": 3,
+      "threshold": 3,
+      "ok": true,
+      "note": "",
+      "op": ">="
+    },
+    {
+      "name": "max_drawdown_pct",
+      "value": 0.11,
+      "threshold": 8.0,
+      "ok": true,
+      "note": "",
+      "op": "<="
+    },
+    {
+      "name": "max_rejection_rate",
+      "value": 0.111,
+      "threshold": 0.1,
+      "ok": false,
+      "note": "",
+      "op": "<="
+    },
+    {
+      "name": "max_policy_violations",
+      "value": 12,
+      "threshold": 0,
+      "ok": false,
+      "note": "",
+      "op": "<="
+    },
+    {
+      "name": "max_liquidations",
+      "value": 0,
+      "threshold": 0,
+      "ok": true,
+      "note": "",
+      "op": "<="
+    },
+    {
+      "name": "min_confirmation_compliance",
+      "value": 1.0,
+      "threshold": 0.95,
+      "ok": true,
+      "note": "",
+      "op": ">="
+    },
+    {
+      "name": "min_limit_fill_rate",
+      "value": 0.0,
+      "threshold": 0.0,
+      "ok": true,
+      "note": "informational (threshold 0)",
+      "op": ">="
+    },
+    {
+      "name": "min_writes_per_session",
+      "value": 2,
+      "threshold": 1,
+      "ok": true,
+      "note": "",
+      "op": ">="
+    },
+    {
+      "name": "twin_unsupported_calls",
+      "value": 0,
+      "threshold": 0,
+      "ok": true,
+      "note": "",
+      "op": "info"
+    }
+  ],
+  "evaluated_at": 1788721917761
+}

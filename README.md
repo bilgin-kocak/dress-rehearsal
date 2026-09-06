@@ -242,9 +242,27 @@ The result is `reports/<coach_id>/COACH.md`: a timeline table, the diagnosis in 
 the corrections, every strategy version with its hash, and the reproduction command. A curated copy of a
 real run lives in [`evidence/`](evidence/).
 
-COACH_RESULTS_PLACEHOLDER
+A real run of the loop on `prompts/strategy_momentum_v1.md` (a plausible first draft: hard-coded rounding
+to six decimals, "70% of the balance" sizing, a take-profit left open at the end), three headless Claude Code
+sessions per step, coach model Opus, trading sessions on Sonnet:
 
-## What a real rehearsal looks like
+| step | window | gate | rejected | policy violations | writes restated | max drawdown | flat at end |
+|---|---|---|---|---|---|---|---|
+| v1 on dev window | `demo` | **FAIL** | 3 (11.1%) | 12 | 100% | 0.11% | 0/3 |
+| v2 on dev window | `demo` | **PASS** | 0 (0.0%) | 0 | 100% | 0.05% | 3/3 |
+| v2 on HELD-OUT window | `holdout` | **PASS** | 0 (0.0%) | 0 | 100% | 0.04% | 3/3 |
+
+The agent's diagnosis, verbatim from `COACH.md`:
+
+> The strategy didn't fail on market direction — it failed on arithmetic it never did. It sizes from "70% of free USDT" (700 on a 1000 USDT book) with no reference to the 200-per-order / 600-gross budget, so every single order was a policy violation, twice over once the resting take-profit stacked on top of the spot holding. And it hardcodes "6 decimal places" for quantity instead of reading LOT_SIZE stepSize, so ETHUSDT (step 0.00010000) rejected -1013 every session, pushing the rejection rate to 11.1%. P&L was flat to slightly negative; the gate never got that far.
+
+It then proposed 13 corrections to the strategy text only (read `spot.exchangeInfo` as the sole
+source of truth, floor to `stepSize`/`tickSize`, size to 180 USDT so both legs stay inside the 200/600 limits,
+sell from the post-fee base balance, cancel and flatten before finishing). Gate/policy fingerprint before and after:
+`fc9e174a06af909e` (unchanged). Total LLM cost: $4.98.
+The full bundle, including transcripts, is in [`evidence/coach_momentum_1/`](evidence/coach_momentum_1/).
+
+## Single rehearsals (`rehearsal run`)
 
 `prompts/strategy_deliberately_bad.md` (a plausible but flawed scalper: hard-coded sizes, 20x, "retry the
 identical call"), one headless Claude Code session against the replay twin serving the **mirrored** schema:
