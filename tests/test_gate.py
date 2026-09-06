@@ -37,10 +37,17 @@ def test_skipped_criteria_when_not_measurable():
     rep = copy.deepcopy(GOOD)
     rep["summary"]["confirmation_compliance"] = None
     rep["summary"]["limit_fill_rate"] = None
-    g = evaluate(rep, GateConfig())
+    g = evaluate(rep, GateConfig(min_limit_fill_rate=0.3))
     assert g["passed"]
     notes = {c["name"]: c["note"] for c in g["criteria"]}
     assert "skipped" in notes["min_confirmation_compliance"] and "skipped" in notes["min_limit_fill_rate"]
+
+
+def test_limit_fill_rate_enforced_only_when_configured():
+    rep = copy.deepcopy(GOOD)
+    rep["summary"]["limit_fill_rate"] = 0.0
+    assert evaluate(rep, GateConfig()).passed if hasattr(evaluate(rep, GateConfig()), "passed") else evaluate(rep, GateConfig())["passed"]
+    assert not evaluate(rep, GateConfig(min_limit_fill_rate=0.3))["passed"]
 
 
 def test_thresholds_from_config():

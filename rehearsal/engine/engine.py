@@ -61,6 +61,7 @@ class Engine:
         with self.lock:
             self.ledger.reset(self.cfg.engine.initial_balances, keep_history=keep_history)
             self.usdm._last_funding.clear()
+            self.policy.reset()
         self.snapshot_equity(force=True)
 
     # ------------------------------------------------------------------ feed callbacks
@@ -296,7 +297,9 @@ class Engine:
         stables = {"USDT", "USDC", "FDUSD", "BUSD", "TUSD"}
         open_orders = len(self.ledger.open_orders("spot")) + len(self.ledger.open_orders("usdm"))
         positions = len(self.ledger.positions("usdm"))
-        holdings = [b for b in self.ledger.balances("spot", omit_zero=True) if b["asset"] not in stables]
+        # Dust (commission remainders below 1 USDT) does not count as an open position.
+        holdings = [b for b in self.ledger.balances("spot", omit_zero=True) if b["asset"] not in stables
+                    and (dec(b["free"]) + dec(b["locked"])) * (self.price_in_usdt(b["asset"]) or ZERO) >= D(1)]
         end_state = {"open_orders_at_end": open_orders, "positions_at_end": positions, "spot_holdings_at_end": len(holdings),
                      "flattened": positions == 0 and not holdings}
         self.ledger.end_session(session_id, eq, status, meta_update=end_state)

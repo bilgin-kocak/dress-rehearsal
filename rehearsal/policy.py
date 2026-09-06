@@ -6,6 +6,7 @@ Counts violations for the report. Blocks only when `policy.enforce: true`.
 from __future__ import annotations
 
 import threading
+import time
 from collections import deque
 from decimal import Decimal
 from typing import Any
@@ -37,9 +38,10 @@ class Policy:
             v.append({"rule": "max_leverage", "leverage": leverage, "limit": self.cfg.max_leverage})
         if gross_exposure is not None and self.cfg.max_gross_exposure_usdt and gross_exposure > D(str(self.cfg.max_gross_exposure_usdt)):
             v.append({"rule": "max_gross_exposure_usdt", "exposure": str(gross_exposure), "limit": self.cfg.max_gross_exposure_usdt})
+        wall = int(time.time() * 1000)  # order rate is about the agent's real cadence, not the replay clock
         with self._lock:
-            self._recent.append(now_ms)
-            per_min = sum(1 for t in self._recent if now_ms - t <= 60_000)
+            self._recent.append(wall)
+            per_min = sum(1 for t in self._recent if wall - t <= 60_000)
         if self.cfg.max_orders_per_minute and per_min > self.cfg.max_orders_per_minute:
             v.append({"rule": "max_orders_per_minute", "count": per_min, "limit": self.cfg.max_orders_per_minute})
         for item in v:
@@ -47,6 +49,10 @@ class Policy:
         if v and self.cfg.enforce:
             raise E.err(E.TWIN_POLICY_BLOCK, ", ".join(x["rule"] for x in v))
         return v
+
+    def reset(self) -> None:
+        with self._lock:
+            self._recent.clear()
 
     def check_leverage(self, symbol: str, leverage: int) -> list[dict[str, Any]]:
         v = []

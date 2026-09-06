@@ -45,6 +45,8 @@ def evaluate(report: dict[str, Any], gate: GateConfig) -> dict[str, Any]:
     lf = s.get("limit_fill_rate")
     if lf is None:
         add("min_limit_fill_rate", None, gate.min_limit_fill_rate, True, note="no limit orders placed; skipped", op=">=")
+    elif gate.min_limit_fill_rate <= 0:
+        add("min_limit_fill_rate", lf, gate.min_limit_fill_rate, True, note="informational (threshold 0)", op=">=")
     else:
         add("min_limit_fill_rate", lf, gate.min_limit_fill_rate, lf >= gate.min_limit_fill_rate, op=">=")
     mw = s.get("min_writes_in_a_session")

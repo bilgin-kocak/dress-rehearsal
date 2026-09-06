@@ -103,7 +103,7 @@ def recommendations(sessions: list[dict[str, Any]], summary: dict[str, Any], cfg
     if summary.get("liquidations"):
         recs.append(f"{summary['liquidations']} liquidation(s) in the twin — leverage/sizing is unsafe. Cap leverage (futures_usds.changeLeverage ≤ {cfg.policy.max_leverage}) and use a stop.")
     lf = summary.get("limit_fill_rate")
-    if lf is not None and lf < cfg.gate.min_limit_fill_rate:
+    if lf is not None and lf < max(cfg.gate.min_limit_fill_rate, 0.3):
         recs.append(f"Limit fill rate {lf:.0%} is below {cfg.gate.min_limit_fill_rate:.0%} — limit orders rest too far from the touch or are cancelled too early.")
     cc = summary.get("confirmation_compliance")
     if cc is not None and cc < cfg.gate.min_confirmation_compliance:

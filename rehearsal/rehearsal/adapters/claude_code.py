@@ -63,7 +63,10 @@ class ClaudeCodeAdapter(Adapter):
                "--disallowedTools", *DISALLOWED]
         if self.cfg.runner.model:
             cmd += ["--model", self.cfg.runner.model]
-        env = {k: v for k, v in os.environ.items() if k not in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT")}
+        drop = {"CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"}
+        if not self.cfg.runner.use_api_key:
+            drop.add("ANTHROPIC_API_KEY")  # let Claude Code use the claude.ai subscription login instead
+        env = {k: v for k, v in os.environ.items() if k not in drop}
         log.info("session %s: launching claude -p as MCP '%s' (max_turns=%s, timeout=%smin)", session_id, server_name, max_turns, minutes)
         t0 = time.time()
         lines: list[dict] = []
@@ -105,7 +108,8 @@ class ClaudeCodeAdapter(Adapter):
                 stderr = proc.stderr.read() if proc.stderr else ""
                 if proc.returncode not in (0, None) and status == "success":
                     status = "error"
-                    err = (stderr or "")[-1500:]
+                    tail = [l for l in (stderr or "").splitlines() if l.strip() and not l.startswith("⚠")]
+                    err = (tail[-1] if tail else stderr or "")[-1500:]
                     log.warning("claude exited %s: %s", proc.returncode, err)
             except Exception as e:  # pragma: no cover
                 status, err = "error", str(e)

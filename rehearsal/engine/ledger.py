@@ -327,6 +327,7 @@ class Ledger:
         f.setdefault("ts", self.now())
         f.setdefault("session_id", self.current_session_id)
         f.setdefault("source", "agent")
+        f.setdefault("realized_pnl", ZERO)
         vals = [dstr(f.get(c)) if isinstance(f.get(c), Decimal) else f.get(c) for c in cols]
         cur = self._exec(f"INSERT INTO fills({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", vals)
         return int(cur.lastrowid or 0)

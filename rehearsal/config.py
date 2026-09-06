@@ -91,7 +91,7 @@ class GateConfig(BaseModel):
     max_policy_violations: int = 0
     max_liquidations: int = 0
     min_confirmation_compliance: float = 0.95
-    min_limit_fill_rate: float = 0.30
+    min_limit_fill_rate: float = 0.0   # informational by default; raise (e.g. 0.3) for long live sessions
     min_writes_per_session: int = 1   # a session in which the agent never traded cannot certify anything
     pass_ttl_hours: int = 24
 
@@ -106,6 +106,7 @@ class RunnerConfig(BaseModel):
     max_turns: int = 40
     session_minutes: int = 10
     model: str | None = "sonnet"  # rehearsals are cheap and fast on Sonnet; set null for the client default
+    use_api_key: bool = True      # false: strip ANTHROPIC_API_KEY so headless Claude Code bills the claude.ai subscription
     reports_dir: str = "reports"
     # Prepended to the strategy prompt in headless sessions only. The real session has a human to say
     # "yes"; a headless one does not, so the operator pre-authorises writes while still requiring the

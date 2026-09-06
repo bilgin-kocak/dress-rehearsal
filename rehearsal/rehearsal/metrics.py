@@ -136,7 +136,8 @@ def session_metrics(ledger: Ledger, session: dict[str, Any], cfg: Config) -> dic
     else:
         open_at_end = [o for o in orders if o["status"] in ("NEW", "PARTIALLY_FILLED")]
         positions_at_end = ledger.positions("usdm")
-        spot_holdings = [b for b in ledger.balances("spot", omit_zero=True) if b["asset"] not in STABLES]
+        spot_holdings = [b for b in ledger.balances("spot", omit_zero=True) if b["asset"] not in STABLES
+                         and dec(b["free"]) + dec(b["locked"]) >= D("0.0001")]
         flattened = not positions_at_end and not spot_holdings
         n_open, n_pos = len(open_at_end), len(positions_at_end)
     canceled_stale = n_open == 0
