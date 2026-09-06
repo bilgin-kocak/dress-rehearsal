@@ -5,6 +5,20 @@ the failures, and retest the correction.**
 
 > Same agent. Same prompt. Change one URL.
 
+Dress Rehearsal is a **Rehearsal Agent for Binance Agent OS**, shipped as an installable Skill Hub skill,
+that takes any trading agent from prompt to production: it rehearses the agent on a zero-drift paper twin
+of the Binance MCP server, explains what went wrong, fixes the strategy, verifies the fix on unseen market
+data, gates go-live, and shadows the agent once it trades for real.
+
+| Binance Agent OS Mini Hackathon | |
+|---|---|
+| Track A · Build an AI agent with Agent OS | The Rehearsal Agent (`rehearsal coach`) + the Skill Hub skill in [`skills/dress-rehearsal/`](skills/dress-rehearsal/SKILL.md) |
+| Track B · Connect your MCPs and trade live | Live spot, futures and convert orders placed through the flip with shadow mode on (evidence below) |
+| Video | _coming with the submission_ |
+| Evidence bundle | [`evidence/coach_momentum_1/`](evidence/coach_momentum_1/): a real FAIL → diagnosis → fix → PASS on a held-out window, with transcripts |
+
+![dashboard](docs/dashboard.png)
+
 Dress Rehearsal is two things. A **paper twin** of the Binance Agent OS MCP server: the same 81 tools,
 the same hidden catalog, the same error envelope, mirrored from the live endpoint with zero drift, backed
 by the real order book and a simulated ledger. And a **Rehearsal Agent** that runs your strategy against
@@ -29,7 +43,7 @@ reports, a bounded correction loop, and live-versus-paper comparison after the f
 
 ```bash
 git clone https://github.com/bilgin-kocak/dress-rehearsal && cd dress-rehearsal
-python3 -m venv .venv && .venv/bin/pip install -e .           # 1. install (Python ≥ 3.11)
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"    # 1. install (Python ≥ 3.11)
 cp rehearsal.example.yaml rehearsal.yaml
 .venv/bin/rehearsal schema dump                                # 2. mirror the real tools/list (after one OAuth in Claude Code)
 .venv/bin/rehearsal serve --transport http                     # 3. twin on http://127.0.0.1:8765/mcp, dashboard on :8765/
@@ -135,8 +149,6 @@ and prints a **twin calibration** suggestion (`engine.latency.mean_ms`, `engine.
 equity curve, open orders, last fills with slippage, the tool-call stream with rejections highlighted,
 the latest gate result with a "copy flip command" button, and the shadow divergence table.
 
-![dashboard](docs/dashboard.png)
-
 ## What is enforced by code, what is measured, what depends on the agent
 
 | Control | How it works | Enforced by |
@@ -218,7 +230,7 @@ rehearsal reset
 rehearsal demo    [--speed 10]
 ```
 
-Tests (no network): `.venv/bin/pytest`.
+Tests (no network): `.venv/bin/pip install -e ".[dev]" && .venv/bin/pytest` (68 tests, also run in CI).
 
 ## The Rehearsal Agent
 
@@ -261,6 +273,11 @@ source of truth, floor to `stepSize`/`tickSize`, size to 180 USDT so both legs s
 sell from the post-fee base balance, cancel and flatten before finishing). Gate/policy fingerprint before and after:
 `fc9e174a06af909e` (unchanged). Total LLM cost: $4.98.
 The full bundle, including transcripts, is in [`evidence/coach_momentum_1/`](evidence/coach_momentum_1/).
+
+What the rehearsal caught before it could cost anything: in each of three sessions v1 tried to send a
+700 USDT order against a 200 USDT mandate (3.5× the limit), stacked a same-size take-profit on top of it,
+was rejected once for a mis-rounded quantity, and finished with a live position and a resting order.
+On a funded account that is three oversized fills and three unattended orders. v2 did none of it.
 
 ## Single rehearsals (`rehearsal run`)
 
@@ -313,6 +330,14 @@ _Screenshots of the live orders placed through the rehearse → gate → flip �
 - Server-enforced envelope policies (`policy.enforce: true` today; per-strategy envelopes next).
 - Codex / Cursor adapters (Codex is experimental today), stdio proxy shadow mode for non-hook clients.
 - Cross margin, OCO, trailing stops.
+
+## Where this fits
+
+Agent OS gives agents a permission boundary and an isolated sub-account. Dress Rehearsal adds the step
+before that boundary is tested with money: a place to fail cheaply, a report that says why, and a gate
+that has to be earned. It completes the Agent OS developer experience rather than replacing any part of it.
+Shadow mode today uses Claude Code hooks; other clients get the twin, the coach and the gate, but not the
+live mirror.
 
 ## Disclaimer
 
