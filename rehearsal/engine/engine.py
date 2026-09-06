@@ -57,9 +57,9 @@ class Engine:
         self._coid_seq += 1
         return f"twin_{uuid.uuid4().hex[:16]}"
 
-    def reset(self) -> None:
+    def reset(self, keep_history: bool = False) -> None:
         with self.lock:
-            self.ledger.reset(self.cfg.engine.initial_balances)
+            self.ledger.reset(self.cfg.engine.initial_balances, keep_history=keep_history)
             self.usdm._last_funding.clear()
         self.snapshot_equity(force=True)
 
@@ -284,7 +284,7 @@ class Engine:
                       reset: bool = True, meta: dict[str, Any] | None = None) -> str:
         sid = session_id or f"s_{int(time.time())}_{uuid.uuid4().hex[:6]}"
         if reset:
-            self.reset()
+            self.reset(keep_history=True)
         eq = self.equity()["equity"]
         self.ledger.start_session(sid, run_id, label, eq, meta)
         self.ledger.add_event("session_start", None, {"session_id": sid, "run_id": run_id})
@@ -293,7 +293,13 @@ class Engine:
 
     def end_session(self, session_id: str, status: str = "DONE") -> dict[str, Any]:
         eq = self.equity()["equity"]
-        self.ledger.end_session(session_id, eq, status)
+        stables = {"USDT", "USDC", "FDUSD", "BUSD", "TUSD"}
+        open_orders = len(self.ledger.open_orders("spot")) + len(self.ledger.open_orders("usdm"))
+        positions = len(self.ledger.positions("usdm"))
+        holdings = [b for b in self.ledger.balances("spot", omit_zero=True) if b["asset"] not in stables]
+        end_state = {"open_orders_at_end": open_orders, "positions_at_end": positions, "spot_holdings_at_end": len(holdings),
+                     "flattened": positions == 0 and not holdings}
+        self.ledger.end_session(session_id, eq, status, meta_update=end_state)
         self.ledger.add_event("session_end", None, {"session_id": session_id, "final_equity": str(eq)}, session_id=session_id)
         return {"session_id": session_id, "final_equity": dstr(eq)}
 

@@ -23,7 +23,7 @@ def main() -> None:
     ap.add_argument("dst")
     ap.add_argument("--minutes", type=float, default=10)
     ap.add_argument("--symbol", default="BTCUSDT")
-    ap.add_argument("--depth-hz", type=float, default=2.0)
+    ap.add_argument("--depth-hz", type=float, default=1.0)
     ap.add_argument("--start-ms", type=int, default=None, help="force a window start")
     a = ap.parse_args()
     src, dst = Path(a.src), Path(a.dst)

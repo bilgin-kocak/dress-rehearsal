@@ -541,17 +541,32 @@ class MarketFeed:
         if mp.exists():
             meta = json.loads(mp.read_text())
         total = int(meta.get("events", 0))
+        wall_start = time.time()
+        try:
+            self._replay_loop(path, speed, total, wall_start)
+        except Exception as e:  # pragma: no cover
+            log.exception("replay driver crashed: %s", e)
+            self.errors.append(f"replay: {e}")
+        finally:
+            self.replay_done.set()
+            with self._clock_cv:
+                self._clock_cv.notify_all()
+
+    def _replay_loop(self, path: Path, speed: float, total: int, wall_start: float) -> None:
         n = 0
         first_ts: int | None = None
-        wall_start = time.time()
         with path.open() as f:
             for line in f:
                 if self._stop.is_set():
                     break
                 if not line.strip():
                     continue
-                ev = json.loads(line)
-                ts = int(ev["ts"])
+                try:
+                    ev = json.loads(line)
+                    ts = int(ev["ts"])
+                except (ValueError, KeyError, TypeError):
+                    log.warning("replay: skipping malformed line")
+                    continue
                 if first_ts is None:
                     first_ts = ts
                     self.clock.force_ms(ts)  # fixtures are in the past: jump the virtual clock to them
@@ -569,9 +584,6 @@ class MarketFeed:
                     self.replay_progress = {"events": n, "total": total, "ts": ts,
                                             "pct": round(100 * n / total, 1) if total else None}
         self.replay_progress = {"events": n, "total": total, "ts": self.clock.now_ms(), "pct": 100.0}
-        self.replay_done.set()
-        with self._clock_cv:
-            self._clock_cv.notify_all()
 
     def replay_step_all(self) -> int:
         """Tests: apply the whole fixture synchronously."""

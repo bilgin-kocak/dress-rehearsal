@@ -141,17 +141,29 @@ class Ledger:
         self._exec("INSERT OR REPLACE INTO kv(key, value) VALUES (?, ?)", (key, json.dumps(value)))
 
     # ------------------------------------------------------------------ reset
-    def reset(self, initial_balances: dict[str, dict[str, float]], keep_calls: bool = False) -> None:
+    def reset(self, initial_balances: dict[str, dict[str, float]], keep_calls: bool = False, keep_history: bool = False) -> None:
+        """Recreate the trading state from initial_balances.
+
+        keep_history=True (new rehearsal session): wallets/positions/leverage are reset and open orders
+        expire, but orders, fills, tool calls, sessions, events and equity snapshots stay (they are keyed
+        by session_id and feed the report). keep_history=False wipes everything (`rehearsal reset`).
+        """
         with self.lock:
-            tables = [
-                "wallets", "balance_changes", "orders", "fills", "positions", "symbol_settings",
-                "income", "transfers", "events", "equity_snapshots", "convert_quotes",
-            ]
-            if not keep_calls:
-                tables += ["tool_calls", "sessions", "shadow_events"]
-            for t in tables:
-                self.conn.execute(f"DELETE FROM {t}")
-            self.conn.execute("DELETE FROM kv WHERE key LIKE 'order_seq:%'")
+            if keep_history:
+                self.conn.execute("UPDATE orders SET status='EXPIRED', locked_amount='0', updated_at=? "
+                                  "WHERE status IN ('NEW','PARTIALLY_FILLED')", (self.now(),))
+                for t in ("wallets", "positions", "symbol_settings", "convert_quotes"):
+                    self.conn.execute(f"DELETE FROM {t}")
+            else:
+                tables = [
+                    "wallets", "balance_changes", "orders", "fills", "positions", "symbol_settings",
+                    "income", "transfers", "events", "equity_snapshots", "convert_quotes",
+                ]
+                if not keep_calls:
+                    tables += ["tool_calls", "sessions", "shadow_events"]
+                for t in tables:
+                    self.conn.execute(f"DELETE FROM {t}")
+                self.conn.execute("DELETE FROM kv WHERE key LIKE 'order_seq:%'")
             for market, assets in initial_balances.items():
                 for asset, amt in assets.items():
                     self.conn.execute(
@@ -412,7 +424,16 @@ class Ledger:
         )
         self.current_session_id = session_id
 
-    def end_session(self, session_id: str, final_equity: Decimal | None = None, status: str = "DONE") -> None:
+    def end_session(self, session_id: str, final_equity: Decimal | None = None, status: str = "DONE",
+                    meta_update: dict[str, Any] | None = None) -> None:
+        if meta_update:
+            row = self._row("SELECT meta FROM sessions WHERE session_id=?", (session_id,))
+            try:
+                meta = json.loads((row or {}).get("meta") or "{}")
+            except Exception:
+                meta = {}
+            meta.update(meta_update)
+            self._exec("UPDATE sessions SET meta=? WHERE session_id=?", (json.dumps(meta, default=str), session_id))
         self._exec("UPDATE sessions SET ended_at=?, final_equity=?, status=? WHERE session_id=?",
                    (self.now(), dstr(final_equity) if final_equity is not None else None, status, session_id))
         if self.current_session_id == session_id:

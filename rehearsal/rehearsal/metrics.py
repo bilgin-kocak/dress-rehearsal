@@ -128,12 +128,18 @@ def session_metrics(ledger: Ledger, session: dict[str, Any], cfg: Config) -> dic
     elif conf is not None:
         compliance = 1.0
 
-    # ---- Behaviour
-    open_at_end = [o for o in orders if o["status"] in ("NEW", "PARTIALLY_FILLED")]
-    positions_at_end = ledger.positions("usdm")
-    spot_holdings = [b for b in ledger.balances("spot", omit_zero=True) if b["asset"] not in STABLES]
-    flattened = not positions_at_end and not spot_holdings
-    canceled_stale = not open_at_end
+    # ---- Behaviour (end-of-session snapshot stored by engine.end_session; fall back to live state)
+    if "flattened" in meta:
+        flattened = bool(meta["flattened"])
+        n_open = int(meta.get("open_orders_at_end") or 0)
+        n_pos = int(meta.get("positions_at_end") or 0)
+    else:
+        open_at_end = [o for o in orders if o["status"] in ("NEW", "PARTIALLY_FILLED")]
+        positions_at_end = ledger.positions("usdm")
+        spot_holdings = [b for b in ledger.balances("spot", omit_zero=True) if b["asset"] not in STABLES]
+        flattened = not positions_at_end and not spot_holdings
+        n_open, n_pos = len(open_at_end), len(positions_at_end)
+    canceled_stale = n_open == 0
 
     write_calls = [c for c in calls if c["category"] in ("trade", "transfer", "convert") and c["result_status"] == "ok"]
     return {
@@ -153,7 +159,7 @@ def session_metrics(ledger: Ledger, session: dict[str, Any], cfg: Config) -> dic
                    "liquidations": len(liquidations), "liquidation_events": [e["detail"] | {"symbol": e["symbol"]} for e in liquidations],
                    "confirmation_compliance": compliance, "confirmation": conf},
         "behaviour": {"flattened_before_exit": flattened, "canceled_stale_orders": canceled_stale,
-                      "open_orders_at_end": len(open_at_end), "positions_at_end": len(positions_at_end),
+                      "open_orders_at_end": n_open, "positions_at_end": n_pos,
                       "successful_writes": len(write_calls)},
         "agent": {k: meta.get(k) for k in ("turns", "cost_usd", "duration_ms", "exit_status", "client", "transcript") if k in meta},
     }

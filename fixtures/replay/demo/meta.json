@@ -1,5 +1,5 @@
 {
-  "events": 44944,
+  "events": 43348,
   "started": 1788696743000,
   "ended": 1788697343000,
   "derived_from": "fixtures/replay/long_2026-09-06",
@@ -10,5 +10,6 @@
     "leverage": 125,
     "qty": "15",
     "adverse_move_pct": 0.22
-  }
+  },
+  "depth_hz": 1
 }
