@@ -10,7 +10,7 @@ Before you give your trading agent capital, give it a dress rehearsal.
 
 Then you change one URL and the same agent goes live, with every real call shadowed back into the twin.
 
-Video: <link>
+Video: https://youtu.be/pOXngiFFQqU
 Repo + evidence bundle: https://github.com/bilgin-kocak/dress-rehearsal
 
 #BinanceAgentOS #MCP

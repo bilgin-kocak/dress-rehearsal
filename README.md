@@ -14,7 +14,7 @@ data, gates go-live, and shadows the agent once it trades for real.
 |---|---|
 | Track A · Build an AI agent with Agent OS | The Rehearsal Agent (`rehearsal coach`) + the Skill Hub skill in [`skills/dress-rehearsal/`](skills/dress-rehearsal/SKILL.md) |
 | Track B · Connect your MCPs and trade live | 8 live writes (spot, futures, convert, transfers) through the flip with shadow mode on: [evidence](#track-b-evidence-the-flip-for-real) |
-| Video | _coming with the submission_ |
+| Video | [https://youtu.be/pOXngiFFQqU](https://youtu.be/pOXngiFFQqU) |
 | Evidence bundle | [`evidence/coach_momentum_1/`](evidence/coach_momentum_1/): a real FAIL → diagnosis → fix → PASS on a held-out window, with transcripts |
 
 ![dashboard](docs/dashboard.png)
