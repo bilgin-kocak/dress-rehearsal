@@ -60,8 +60,8 @@ def build_state(twin: Twin, cfg: Config, shadow: ShadowReceiver) -> dict[str, An
         calls.append({"id": c["id"], "ts": c["ts"], "tool": c["tool"], "category": c["category"], "status": c["result_status"],
                       "error_code": c["error_code"], "latency_ms": c["latency_ms"], "session_id": c["session_id"], "source": c["source"],
                       "args": c["args"], "msg": (c["result"] or {}).get("msg") if isinstance(c["result"], dict) else None})
-    curve = [[r["ts"], float(r["equity"])] for r in led.equity_curve(limit=1500)]
-    live_curve = [[r["ts"], float(r["equity"])] for r in led.equity_curve(source="live", limit=1500)]
+    curve = [[r["ts"], float(r["equity"])] for r in _latest_segment(led.equity_curve(limit=3000))]
+    live_curve = [[r["ts"], float(r["equity"])] for r in _latest_segment(led.equity_curve(source="live", limit=1500))]
     report = _latest_report(cfg)
     sessions = led.sessions()
     cur = led.current_session_id
@@ -90,6 +90,21 @@ def build_state(twin: Twin, cfg: Config, shadow: ShadowReceiver) -> dict[str, An
                    "latency": cfg.engine.latency.model_dump(), "queue_factor": cfg.engine.queue_factor, "live_url": cfg.live_url,
                    "http_port": cfg.server.http_port},
     }
+
+
+def _latest_segment(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep only the most recent monotonic-time run of snapshots.
+
+    Replay restarts (demo loops, new rehearsal sessions) rewind the virtual clock; drawing the older
+    loops on the same time axis produces lines that run backwards across the chart."""
+    seg: list[dict[str, Any]] = []
+    last: int | None = None
+    for r in rows:
+        if last is not None and r["ts"] < last:
+            seg = []
+        seg.append(r)
+        last = r["ts"]
+    return seg
 
 
 def _initial_equity(cfg: Config, ledger: Any = None) -> Any:
