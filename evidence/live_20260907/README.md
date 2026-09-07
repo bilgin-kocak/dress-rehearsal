@@ -13,7 +13,10 @@ tranIds, prices, quantities and fees are verbatim.
 | `wallet_transfers.json` | 15 USDT Spot→Futures (tranId 409061557911), 14.97428911 USDT back (tranId 409021326347) |
 | `spot_getAccount_after.json` | Final balances |
 | `../../docs/shadow.png` | Dashboard in SHADOW mode during the run: live vs paper equity, divergence table |
-| `screenshots/` | Binance website screenshots of the sub-account order history (added by the account owner) |
+| `screenshots/spot_trades.png` | Sub-account Order Management → Spot → Trade History (both BTCUSDT fills) |
+| `screenshots/futures_orders.png` | Sub-account Order Management → Futures → Order History (both ETHUSDT orders) |
+| `screenshots/futures_transactions.png` | Futures Transaction History: +15 USDT transfer, two commissions, realized PnL −0.00099999, −14.97428911 transfer |
+| `screenshots/balances.png` | Asset Management: 43.38856371 USDT, 0.00674179 BNB (from the convert), 0.00001988 BTC |
 
 The twin's view of the same calls (13 mirrored events, divergence per write) is in `../../docs/shadow.png`;
 the two twin gaps it exposed (sell by `quoteOrderQty`, convert quote id mapping) were fixed in commit e2d58b4.

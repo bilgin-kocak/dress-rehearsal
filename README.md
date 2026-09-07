@@ -343,6 +343,14 @@ Binance's own history endpoints for every leg are saved verbatim in [`evidence/l
 
 ![shadow](docs/shadow.png)
 
+Binance's sub-account pages for the same run (`evidence/live_20260907/screenshots/`):
+
+| Spot trade history | Futures order history |
+|---|---|
+| ![spot](evidence/live_20260907/screenshots/spot_trades.png) | ![futures](evidence/live_20260907/screenshots/futures_orders.png) |
+| **Futures transaction history** (transfer in, fees, realized PnL, transfer out) | **Sub-account balances** after the run |
+| ![tx](evidence/live_20260907/screenshots/futures_transactions.png) | ![bal](evidence/live_20260907/screenshots/balances.png) |
+
 **What the live run taught the twin.** Two of the eight mirrored writes exposed real gaps, which is
 exactly what shadow mode is for: the twin did not support selling by `quoteOrderQty`, and it issued its own
 convert quote ids so the live `acceptQuote` could not be mapped. Both are fixed and tested. The live
