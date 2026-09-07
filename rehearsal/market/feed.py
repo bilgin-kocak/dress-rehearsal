@@ -271,9 +271,12 @@ class MarketFeed:
         """Call a public REST endpoint by name. In replay mode, serve recorded snapshots when present."""
         if self.mode == "replay":
             snap = self._replay_snapshots.get(name)
-            key = (kw.get("symbol") or "").upper()
+            key = (kw.get("symbol") or kw.get("pair") or "").upper()
             if isinstance(snap, dict) and key in snap:
-                return snap[key]
+                entry = snap[key]
+                if "klines" in name:
+                    return self._replay_klines(entry, kw)
+                return entry
             if isinstance(snap, dict) and "*" in snap:
                 return snap["*"]
             return self._synth_passthrough(name, **kw)
@@ -320,6 +323,29 @@ class MarketFeed:
             return [{"a": i, "p": _fmt(t[1], 8), "q": _fmt(t[2], 8), "T": t[0], "m": t[3]} for i, t in
                     enumerate(list(st.trades)[-int(kw.get("limit") or 500):])]
         return {"_twin_note": f"no replay snapshot for {name}"}
+
+    def _replay_klines(self, entry: Any, kw: dict[str, Any]) -> list[list[Any]]:
+        """Serve recorded klines for the requested interval, hiding bars that open after the replay clock."""
+        interval = str(kw.get("interval") or "1h")
+        if isinstance(entry, dict):
+            bars = entry.get(interval)
+            if bars is None:
+                # nearest recorded interval by duration
+                have = {k: _interval_seconds(k) for k in entry}
+                want = _interval_seconds(interval)
+                nearest = min(have, key=lambda k: abs(have[k] - want)) if have else None
+                bars = entry.get(nearest, []) if nearest else []
+        else:
+            bars = entry or []
+        now = self.clock.now_ms()
+        bars = [b for b in bars if int(b[0]) <= now]
+        start, end = kw.get("start"), kw.get("end")
+        if start:
+            bars = [b for b in bars if int(b[0]) >= int(start)]
+        if end:
+            bars = [b for b in bars if int(b[0]) <= int(end)]
+        limit = int(kw.get("limit") or 500)
+        return bars[-limit:]
 
     def _premium_klines(self, symbol: str, interval: str, limit: int) -> list[list[Any]]:
         st = self._st("usdm", symbol)

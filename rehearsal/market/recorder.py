@@ -20,6 +20,7 @@ from typing import Any
 from rehearsal.market.binance_public import BinancePublic
 
 log = logging.getLogger("rehearsal.recorder")
+KLINE_INTERVALS = ("1m", "5m", "15m", "1h", "4h", "1d")
 
 
 def _filter_exinfo(info: dict[str, Any], symbols: set[str]) -> dict[str, Any]:
@@ -45,11 +46,11 @@ def take_snapshots(api: BinancePublic, symbols: list[str], out_dir: Path) -> dic
         try:
             snaps["spot_ticker_24hr"][s] = api.spot_ticker_24hr(s)
             snaps["spot_ticker_price"][s] = api.spot_ticker_price(s)
-            snaps["spot_klines"][s] = api.spot_klines(s, "1h", limit=200)
+            snaps["spot_klines"][s] = {iv: api.spot_klines(s, iv, limit=200) for iv in KLINE_INTERVALS}
             snaps["spot_depth"][s] = api.spot_depth(s, 100)
             snaps["usdm_ticker_24hr"][s] = api.usdm_ticker_24hr(s)
             snaps["usdm_ticker_price"][s] = api.usdm_ticker_price(s)
-            snaps["usdm_klines"][s] = api.usdm_klines(s, "1h", limit=200)
+            snaps["usdm_klines"][s] = {iv: api.usdm_klines(s, iv, limit=200) for iv in KLINE_INTERVALS}
             snaps["usdm_premium_index"][s] = api.usdm_premium_index(s)
             snaps["usdm_funding_rate"][s] = api.usdm_funding_rate(s, limit=10)
             snaps["usdm_depth"][s] = api.usdm_depth(s, 100)

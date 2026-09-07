@@ -18,7 +18,8 @@ from rehearsal.rehearsal.adapters.base import Adapter, SessionResult, analyse_tr
 
 log = logging.getLogger("rehearsal.runner.claude")
 
-DISALLOWED = ["Bash", "Edit", "Write", "MultiEdit", "NotebookEdit", "WebFetch", "WebSearch", "Task", "Agent", "TodoWrite"]
+DISALLOWED = ["Bash", "Edit", "Write", "MultiEdit", "NotebookEdit", "WebFetch", "WebSearch", "Task", "Agent", "TodoWrite",
+              "Read", "Glob", "Grep", "LS", "NotebookRead"]  # a trading agent needs market tools only
 
 
 FALLBACK_SERVER_NAME = "binance-twin"
