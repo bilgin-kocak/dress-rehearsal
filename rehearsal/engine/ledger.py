@@ -163,7 +163,7 @@ class Ledger:
                     tables += ["tool_calls", "sessions", "shadow_events"]
                 for t in tables:
                     self.conn.execute(f"DELETE FROM {t}")
-                self.conn.execute("DELETE FROM kv WHERE key LIKE 'order_seq:%'")
+                self.conn.execute("DELETE FROM kv WHERE key LIKE 'order_seq:%' OR key='initial_equity_override'")
             for market, assets in initial_balances.items():
                 for asset, amt in assets.items():
                     self.conn.execute(

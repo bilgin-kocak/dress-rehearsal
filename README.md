@@ -13,7 +13,7 @@ data, gates go-live, and shadows the agent once it trades for real.
 | Binance Agent OS Mini Hackathon | |
 |---|---|
 | Track A · Build an AI agent with Agent OS | The Rehearsal Agent (`rehearsal coach`) + the Skill Hub skill in [`skills/dress-rehearsal/`](skills/dress-rehearsal/SKILL.md) |
-| Track B · Connect your MCPs and trade live | Live spot, futures and convert orders placed through the flip with shadow mode on (evidence below) |
+| Track B · Connect your MCPs and trade live | 8 live writes (spot, futures, convert, transfers) through the flip with shadow mode on: [evidence](#track-b-evidence-the-flip-for-real) |
 | Video | _coming with the submission_ |
 | Evidence bundle | [`evidence/coach_momentum_1/`](evidence/coach_momentum_1/): a real FAIL → diagnosis → fix → PASS on a held-out window, with transcripts |
 
@@ -320,9 +320,34 @@ Flip to live:
   the call. That restatement is what **confirmation compliance** measures.
 - Sessions default to `--model sonnet` (about $0.3-0.8 per session).
 
-## Track B evidence
+## Track B evidence: the flip, for real
 
-_Screenshots of the live orders placed through the rehearse → gate → flip → shadow flow go here (spot, futures, convert)._
+After the Rehearsal Agent's PASS on the held-out window, the same Claude Code session was pointed at
+`https://agent.binance.com/mcp/agentic` with `rehearsal shadow install` active and the twin running on
+port 8765. Eight live writes on the funded Agentic sub-account (50 USDT), 2026-09-07 15:52–15:55 UTC,
+each restated and approved in Claude Code's permission prompt:
+
+| # | Live call | Result on Binance | Twin (shadow) |
+|---|---|---|---|
+| 1 | `spot.newOrder` BTCUSDT BUY MARKET quoteOrderQty 10 | FILLED 0.00012 BTC @ 78,852.00, order 66329815842 | FILLED @ 78,852.00, **0.0 bps** divergence |
+| 2 | `spot.newOrder` BTCUSDT SELL MARKET quoteOrderQty 8 | FILLED 0.0001 BTC @ 78,843.99, order 66329831688 | twin error (sell-by-quote unsupported) → fixed |
+| 3 | `wallet.userUniversalTransfer` MAIN_UMFUTURE 15 USDT | tranId 409061557911 | mirrored |
+| 4 | `futures_usds.changeInitialLeverage` ETHUSDT 5 | leverage 5, cross | mirrored |
+| 5 | `futures_usds.newOrder` ETHUSDT BUY MARKET 0.01 | FILLED, entry 2,471.14, liq 976.28, order 8389766272303890000 | FILLED, qty diff 0 |
+| 6 | `futures_usds.newOrder` ETHUSDT SELL MARKET 0.01 reduceOnly | FILLED, order 8389766272304058000 | FILLED, qty diff 0 |
+| 7 | `wallet.userUniversalTransfer` UMFUTURE_MAIN 14.97428911 USDT | tranId 409021326347 | twin error (fee drift 0.001 USDT) → expected |
+| 8 | `convert.sendQuoteRequest` + `convert.acceptQuote` 5 USDT → BNB | 0.00674179 BNB @ 741.642, order 2354161734891321379 | twin error (quote id mismatch) → fixed |
+
+Final live balances: 43.39 USDT, 0.00674179 BNB, 0.00001988 BTC dust. Round-trip cost about 0.07 USDT.
+
+![shadow](docs/shadow.png)
+
+**What the live run taught the twin.** Two of the eight mirrored writes exposed real gaps, which is
+exactly what shadow mode is for: the twin did not support selling by `quoteOrderQty`, and it issued its own
+convert quote ids so the live `acceptQuote` could not be mapped. Both are fixed and tested. The live
+gateway also rejected `quantity: 0.00011` and `0.0001` with `-1100 Illegal characters`: it formats JSON
+numbers below 0.001 in exponent form before signing the request. The twin now reproduces that rejection
+verbatim, so an agent learns in rehearsal to send small sizes as `quoteOrderQty` or as strings.
 
 ## Roadmap
 

@@ -74,7 +74,7 @@ def build_state(twin: Twin, cfg: Config, shadow: ShadowReceiver) -> dict[str, An
         "schema": twin.catalog.status(),
         "feed": feed.status(),
         "equity": {"equity": dstr(eq["equity"], 2), "spot_value": dstr(eq["spot_value"], 2), "usdm_wallet": dstr(eq["usdm_wallet"], 2),
-                   "usdm_unrealized": dstr(eq["usdm_unrealized"], 2), "initial": dstr(_initial_equity(cfg), 2)},
+                   "usdm_unrealized": dstr(eq["usdm_unrealized"], 2), "initial": dstr(_initial_equity(cfg, led), 2)},
         "balances": {"spot": eq["spot_detail"], "usdm": e.usdm.balance_view()[0]},
         "positions": e.usdm.position_view(),
         "open_orders": open_orders,
@@ -92,7 +92,11 @@ def build_state(twin: Twin, cfg: Config, shadow: ShadowReceiver) -> dict[str, An
     }
 
 
-def _initial_equity(cfg: Config) -> Any:
+def _initial_equity(cfg: Config, ledger: Any = None) -> Any:
+    if ledger is not None:
+        ov = ledger.kv_get("initial_equity_override")
+        if ov is not None:
+            return dec(ov)
     tot = 0.0
     for m, assets in cfg.engine.initial_balances.items():
         for a, v in assets.items():

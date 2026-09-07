@@ -45,6 +45,10 @@ class SpotEngine:
         """Asset and amount Binance would lock for this order."""
         base, quote = sym["baseAsset"], sym["quoteAsset"]
         if o.side == "SELL":
+            if o.quote_qty is not None:
+                # Sell enough base to receive quote_qty: lock the whole free base balance, release the rest after fills.
+                free, _ = self.ledger.balance("spot", base)
+                return base, free
             return base, o.qty or ZERO
         if o.quote_qty is not None:
             return quote, o.quote_qty
@@ -133,13 +137,17 @@ class SpotEngine:
         side_levels = asks if o.side == "BUY" else bids
         step = B.lot_step(sym)
         limit = o.price if typ in ("LIMIT", "STOP_LOSS_LIMIT", "TAKE_PROFIT_LIMIT") else None
-        if typ in ("MARKET", "STOP_LOSS", "TAKE_PROFIT") and o.quote_qty is not None and o.side == "BUY":
-            res = B.walk(side_levels, quote=o.quote_qty, is_buy=True, step=step)
-        else:
-            res = B.walk(side_levels, qty=o.qty, limit_price=limit, is_buy=(o.side == "BUY"), step=step)
-
         row = self.ledger.get_order("spot", order_id)
         assert row is not None
+        if typ in ("MARKET", "STOP_LOSS", "TAKE_PROFIT") and o.quote_qty is not None:
+            # quoteOrderQty: spend (buy) or receive (sell) that much quote asset; Binance semantics.
+            res = B.walk(side_levels, quote=o.quote_qty, is_buy=(o.side == "BUY"), step=step)
+            if o.side == "SELL":
+                held = dec(row["locked_amount"])  # the whole free base balance was locked at placement
+                if res.filled_qty > held:
+                    res = B.walk(side_levels, qty=held, is_buy=False, step=step)
+        else:
+            res = B.walk(side_levels, qty=o.qty, limit_price=limit, is_buy=(o.side == "BUY"), step=step)
         remaining = (o.qty - res.filled_qty) if o.qty is not None else ZERO
         tif = o.time_in_force or "GTC"
 

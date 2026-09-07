@@ -75,3 +75,39 @@ def test_compare_error_shapes():
     assert d["status_match"] and d["real_status"] == "ERROR -1121"
     cal = calibrate([{"avg_price_diff_bps": -2.0, "status_match": True}, {"avg_price_diff_bps": -1.0, "status_match": True}], None or __import__("rehearsal.config", fromlist=["Config"]).Config())
     assert cal["mean_avg_price_diff_bps"] == -1.5 and cal["suggested_latency_mean_ms"] > 80
+
+
+def test_sell_by_quote_order_qty(engine):
+    engine.spot.place({"symbol": "BTCUSDT", "side": "BUY", "type": "MARKET", "quantity": "0.004"})
+    r = engine.spot.place({"symbol": "BTCUSDT", "side": "SELL", "type": "MARKET", "quoteOrderQty": "100"})
+    assert r["status"] == "FILLED"
+    assert D(r["cummulativeQuoteQty"]) >= D(100) and D(r["executedQty"]) > 0
+    assert engine.ledger.balance("spot", "BTC")[1] == D(0)  # nothing left locked
+
+
+async def test_numeric_params_below_0_001_are_rejected_like_the_real_gateway(engine):
+    from mcp import Client
+    from mcp.shared.exceptions import MCPError
+    import pytest as _pytest
+    twin = _twin(engine)
+    async with Client(twin.make_server()) as client:
+        with _pytest.raises(MCPError) as ei:
+            await client.call_tool("spot.newOrder", {"symbol": "BTCUSDT", "side": "SELL", "type": "MARKET", "quantity": 0.0001})
+        assert ei.value.error.message.startswith('{"code":-1100,"msg":"Illegal characters found in parameter \'quantity\'')
+        # strings are fine (that is what the twin's own docs recommend)
+        r = await client.call_tool("spot.newOrder", {"symbol": "BTCUSDT", "side": "BUY", "type": "MARKET", "quantity": "0.001"})
+        assert json.loads(r.content[0].text)["status"] == "FILLED"
+
+
+def test_shadow_maps_live_ids_to_twin_ids(engine):
+    twin = _twin(engine)
+    rx = ShadowReceiver(twin, engine.cfg)
+    # live quote request -> twin issues its own quoteId; the live accept must be translated
+    rx.handle({"tool_name": "mcp__binance-mcp-server__convert_sendQuoteRequest",
+               "tool_input": {"fromAsset": "USDT", "toAsset": "BTC", "fromAmount": 20},
+               "tool_response": {"content": [{"type": "text", "text": json.dumps({"quoteId": "LIVE-Q-1", "ratio": "0.0000125", "toAmount": "0.00025", "fromAmount": "20"})}]}})
+    assert "LIVE-Q-1" in rx.quote_map
+    out = rx.handle({"tool_name": "mcp__binance-mcp-server__convert_acceptQuote", "tool_input": {"quoteId": "LIVE-Q-1"},
+                     "tool_response": {"content": [{"type": "text", "text": json.dumps({"orderId": "77", "orderStatus": "PROCESS"})}]}})
+    assert out["divergence"]["sim_status"] != "ERROR -4058"
+    assert engine.ledger.balance("spot", "BTC")[0] > 0

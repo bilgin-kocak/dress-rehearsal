@@ -173,6 +173,7 @@ class Twin:
             ctx = ToolContext(engine=self.engine, catalog=self.catalog, session_id=session_id, source=source,
                               dispatch=self._dispatch_inner)
             call_args = self.confirmer.strip(args)
+            self._check_numeric_formatting(call_args)
             if spec.handler in ("unsupported", "passthrough_public"):
                 call_args = dict(call_args, _tool=spec.name)
             if spec.category == "trade" and call_args.get("symbol") and spec.market:
@@ -194,6 +195,17 @@ class Twin:
             log.exception("handler crashed for %s: %s", name, e)
             result, status, error_code = {"code": -1000, "msg": "An unknown error occurred while processing the request."}, "error", -1000
         return self._finish(spec, name, args, status, result, error_code, t0, mid, source, session_id, via)
+
+    @staticmethod
+    def _check_numeric_formatting(args: dict[str, Any]) -> None:
+        """Observed on the real server (2026-09-07): JSON numbers below 0.001 are formatted in exponent form
+        (Java-style 1.0E-4) before the request is signed, and Binance rejects them with -1100. Strings pass."""
+        for k, v in args.items():
+            if isinstance(v, bool) or isinstance(v, str):
+                continue
+            if isinstance(v, (int, float)) and v != 0 and abs(v) < 0.001:
+                raise BinanceError(-1100, f"Illegal characters found in parameter '{k}'; legal range is "
+                                          "'^([0-9]{1,20})(\\.[0-9]{1,20})?$'.")
 
     def _finish(self, spec: ToolSpec | None, name: str, args: dict[str, Any], status: str, result: Any, error_code: int | None,
                 t0: float, mid: Any, source: str, session_id: str | None, via: str | None) -> dict[str, Any]:

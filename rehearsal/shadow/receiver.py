@@ -57,6 +57,8 @@ class ShadowReceiver:
         self.last_event_ts: float | None = None
         self.count = 0
         self.synced_balances = False
+        self.quote_map: dict[str, str] = {}          # real quoteId -> twin quoteId
+        self.order_map: dict[tuple[str, str], int] = {}  # (symbol, real orderId) -> twin orderId
 
     def handle(self, body: dict[str, Any]) -> dict[str, Any]:
         self.active = True
@@ -88,13 +90,34 @@ class ShadowReceiver:
         sim: Any = None
         divergence: dict[str, Any] | None = None
         if spec is not None:
-            outcome = self.twin.execute(tool_name, dict(args), session_id, source="shadow")
+            sim_args = self._translate_ids(dict(args))
+            outcome = self.twin.execute(tool_name, sim_args, session_id, source="shadow")
             sim = outcome["result"]
+            self._learn_ids(args, real, sim)
             if is_write:
                 divergence = compare(tool_name, args, real, sim, outcome.get("latency_ms"))
         self.engine.ledger.add_shadow_event(tool_name, args, real, sim, divergence, is_write)
         self._record_live_equity(tool_name, real)
         return {"ok": True, "tool": tool_name, "mirrored": spec is not None, "divergence": divergence}
+
+    def _translate_ids(self, args: dict[str, Any]) -> dict[str, Any]:
+        """The twin issues its own ids; translate the live ids the agent uses back to the twin's."""
+        q = args.get("quoteId")
+        if q is not None and str(q) in self.quote_map:
+            args["quoteId"] = self.quote_map[str(q)]
+        oid = args.get("orderId")
+        sym = str(args.get("symbol") or "").upper()
+        if oid is not None and (sym, str(oid)) in self.order_map:
+            args["orderId"] = self.order_map[(sym, str(oid))]
+        return args
+
+    def _learn_ids(self, args: dict[str, Any], real: Any, sim: Any) -> None:
+        if not isinstance(real, dict) or not isinstance(sim, dict):
+            return
+        if real.get("quoteId") and sim.get("quoteId"):
+            self.quote_map[str(real["quoteId"])] = str(sim["quoteId"])
+        if real.get("orderId") is not None and sim.get("orderId") is not None and real.get("symbol"):
+            self.order_map[(str(real["symbol"]).upper(), str(real["orderId"]))] = int(sim["orderId"])
 
     def _maybe_sync_balances(self, tool_name: str, real: Any) -> None:
         if not isinstance(real, dict):
@@ -113,6 +136,8 @@ class ShadowReceiver:
                 self.engine.ledger.reset(init, keep_calls=True)
                 self.engine.snapshot_equity(force=True)
                 self.synced_balances = True
+                # The dashboard's "vs initial" baseline is now the live account, not rehearsal.yaml.
+                self.engine.ledger.kv_set("initial_equity_override", str(self.engine.equity()["equity"]))
                 self.engine.ledger.add_event("shadow_balance_sync", None, {"balances": init["spot"]}, source="shadow")
                 log.info("shadow: synced paper balances from live account: %s", init["spot"])
 
