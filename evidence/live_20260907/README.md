@@ -18,5 +18,8 @@ tranIds, prices, quantities and fees are verbatim.
 | `screenshots/futures_transactions.png` | Futures Transaction History: +15 USDT transfer, two commissions, realized PnL −0.00099999, −14.97428911 transfer |
 | `screenshots/balances.png` | Asset Management: 43.38856371 USDT, 0.00674179 BNB (from the convert), 0.00001988 BTC |
 
+Note: Binance's master-account UI has no Convert history view for sub-accounts, so the convert leg is evidenced by
+`convert_getConvertTradeHistory.json` (quote id, order id, SUCCESS) and by the 0.00674179 BNB balance in `screenshots/balances.png`.
+
 The twin's view of the same calls (13 mirrored events, divergence per write) is in `../../docs/shadow.png`;
 the two twin gaps it exposed (sell by `quoteOrderQty`, convert quote id mapping) were fixed in commit e2d58b4.
