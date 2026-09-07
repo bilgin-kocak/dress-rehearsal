@@ -339,6 +339,7 @@ each restated and approved in Claude Code's permission prompt:
 | 8 | `convert.sendQuoteRequest` + `convert.acceptQuote` 5 USDT → BNB | 0.00674179 BNB @ 741.642, order 2354161734891321379 | twin error (quote id mismatch) → fixed |
 
 Final live balances: 43.39 USDT, 0.00674179 BNB, 0.00001988 BTC dust. Round-trip cost about 0.07 USDT.
+Binance's own history endpoints for every leg are saved verbatim in [`evidence/live_20260907/`](evidence/live_20260907/).
 
 ![shadow](docs/shadow.png)
 

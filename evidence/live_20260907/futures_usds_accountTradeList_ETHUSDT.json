@@ -1,0 +1,30 @@
+[
+  {
+    "symbol": "ETHUSDT",
+    "id": 8690104711,
+    "orderId": 8389766272303890838,
+    "side": "BUY",
+    "price": "2471.14",
+    "qty": "0.010",
+    "realizedPnl": "0",
+    "quoteQty": "24.71140",
+    "commission": "0.01235570",
+    "commissionAsset": "USDT",
+    "time": 1788796441035,
+    "maker": false
+  },
+  {
+    "symbol": "ETHUSDT",
+    "id": 8690105538,
+    "orderId": 8389766272304058841,
+    "side": "SELL",
+    "price": "2471.04",
+    "qty": "0.010",
+    "realizedPnl": "-0.00099999",
+    "quoteQty": "24.71040",
+    "commission": "0.01235520",
+    "commissionAsset": "USDT",
+    "time": 1788796456664,
+    "maker": false
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": 1788796425000,
+    "asset": "USDT",
+    "amount": "15",
+    "type": "MAIN_UMFUTURE",
+    "status": "CONFIRMED",
+    "tranId": 409061557911
+  },
+  {
+    "timestamp": 1788796491000,
+    "asset": "USDT",
+    "amount": "14.97428911",
+    "type": "UMFUTURE_MAIN",
+    "status": "CONFIRMED",
+    "tranId": 409021326347
+  }
+]

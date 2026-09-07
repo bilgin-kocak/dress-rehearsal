@@ -1,0 +1,19 @@
+{
+  "list": [
+    {
+      "quoteId": "7d938d2cfaa24e47b800847328fe5b96",
+      "orderId": 2354161734891321300,
+      "orderStatus": "SUCCESS",
+      "fromAsset": "USDT",
+      "fromAmount": "5",
+      "toAsset": "BNB",
+      "toAmount": "0.00674179",
+      "ratio": "0.00134836",
+      "inverseRatio": "741.642",
+      "createTime": 1788796496217,
+      "orderType": "MARKET",
+      "side": "BUY",
+      "walletType": "SPOT"
+    }
+  ]
+}
